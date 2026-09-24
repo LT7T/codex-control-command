@@ -5,7 +5,7 @@
   "description": "Local Windows control centre for Codex tasks that finish but leave Send disabled, with privacy-safe usage analysis.",
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/control-center.test.mjs tests/usage-intelligence.test.mjs"
   },
   "engines": {
     "node": ">=20"
