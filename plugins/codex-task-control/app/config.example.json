@@ -1,0 +1,15 @@
+{
+  "port": 47651,
+  "recentTaskLimit": 20,
+  "maxPromptBytes": 262144,
+  "analyticsWindowDays": 30,
+  "analyticsMaxSessions": 50,
+  "analyticsIncludeArchived": false,
+  "measurePromptSize": false,
+  "enableUsageAnnotations": true,
+  "taskTokenBudget": 0,
+  "dailyTokenBudget": 0,
+  "modelPricingUsdPerMillion": {},
+  "enableEndLocalWork": true,
+  "openBrowserOnShortcut": true
+}

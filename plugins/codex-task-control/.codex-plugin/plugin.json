@@ -1,0 +1,33 @@
+{
+  "name": "codex-task-control",
+  "version": "0.3.0+codex.20260924230600",
+  "description": "A local Windows control centre for Codex tasks that finish but leave Send disabled, plus privacy-safe usage analysis and local-work controls.",
+  "author": {
+    "name": "Codex Command and Control contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "windows",
+    "recovery",
+    "task-control"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Command and Control",
+    "shortDescription": "Recover follow-ups and analyze local Codex usage.",
+    "longDescription": "Install and operate the local Codex Command and Control centre on Windows. It can safely send a follow-up to an idle finished task, show privacy-safe token, timing, context, tool, activity and storage statistics, compare turns, and deliberately stop all local Codex work.",
+    "developerName": "Codex Command and Control contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Local"
+    ],
+    "defaultPrompt": [
+      "Install Codex Command and Control on this Windows computer.",
+      "Open Codex Command and Control for this task.",
+      "Help me recover a task whose Send button is stuck.",
+      "Analyze my recent Codex usage and suggest efficiency improvements."
+    ]
+  }
+}

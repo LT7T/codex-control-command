@@ -1,0 +1,16 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "codex-task-control",
+  "version": "0.3.0",
+  "description": "Local Windows control centre for Codex tasks that finish but leave Send disabled, with privacy-safe usage analysis.",
+  "author": {
+    "name": "Codex Command and Control contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "windows",
+    "recovery",
+    "task-control"
+  ]
+}

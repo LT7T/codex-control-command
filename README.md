@@ -232,4 +232,3 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-Package.ps1
 ```
 
 Licensed under the [MIT License](LICENSE).
-

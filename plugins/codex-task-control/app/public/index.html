@@ -1,0 +1,1754 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Codex Command and Control</title>
+  <style nonce="__TASK_CONTROL_NONCE__">
+    :root {
+      color-scheme: light dark;
+      --bg: #f4f6f8;
+      --surface: #ffffff;
+      --surface-2: #f8fafb;
+      --text: #17212b;
+      --muted: #647180;
+      --line: #dce2e8;
+      --blue: #1267d6;
+      --blue-strong: #0a55b8;
+      --green: #087a55;
+      --amber: #a25d00;
+      --red: #b5292f;
+      --shadow: 0 18px 50px rgba(22, 32, 45, .09);
+      font-family: Inter, ui-sans-serif, "Segoe UI", Arial, sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #101418;
+        --surface: #181e24;
+        --surface-2: #20272f;
+        --text: #eef3f7;
+        --muted: #a8b2bc;
+        --line: #323c46;
+        --blue: #65a7ff;
+        --blue-strong: #8cbdff;
+        --green: #65d7af;
+        --amber: #ffc46f;
+        --red: #ff858a;
+        --shadow: 0 20px 55px rgba(0, 0, 0, .3);
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); }
+    button, select, textarea, input { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    main { width: min(1120px, calc(100% - 32px)); margin: 28px auto 60px; }
+    header { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; margin-bottom: 22px; }
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .mark { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; color: white; background: linear-gradient(145deg, #1578ed, #7549d9); box-shadow: var(--shadow); font-weight: 800; letter-spacing: -.04em; }
+    h1 { font-size: clamp(23px, 4vw, 32px); margin: 0; letter-spacing: -.035em; }
+    .subtitle { margin: 5px 0 0; color: var(--muted); line-height: 1.45; }
+    .connection { display: inline-flex; align-items: center; gap: 8px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); white-space: nowrap; font-size: 13px; color: var(--muted); }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--amber); }
+    .dot.online { background: var(--green); box-shadow: 0 0 0 4px color-mix(in srgb, var(--green) 18%, transparent); }
+    .view-tabs { display: flex; gap: 8px; margin: 0 0 18px; }
+    .view-tabs button { min-height: 36px; padding: 7px 12px; }
+    .view-tabs button.active { color: white; border-color: var(--blue); background: var(--blue); }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+    .stat, .card { min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+    .stat { padding: 16px; min-height: 98px; }
+    .stat-label { color: var(--muted); font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .06em; }
+    .stat-value { font-size: 25px; font-weight: 750; margin-top: 8px; letter-spacing: -.03em; }
+    .stat-note { color: var(--muted); font-size: 12px; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(310px, .8fr); gap: 18px; align-items: start; }
+    .card { padding: 22px; }
+    .card + .card { margin-top: 18px; }
+    h2 { font-size: 17px; margin: 0 0 16px; letter-spacing: -.015em; }
+    label { display: block; font-weight: 650; font-size: 13px; margin: 16px 0 7px; }
+    select, textarea, input { width: 100%; color: var(--text); background: var(--surface-2); border: 1px solid var(--line); border-radius: 11px; outline: none; }
+    select { height: 45px; padding: 0 11px; }
+    input { height: 45px; padding: 0 11px; }
+    textarea { min-height: 190px; resize: vertical; padding: 13px; line-height: 1.5; }
+    select:focus, textarea:focus, input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 18%, transparent); }
+    .task-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; min-height: 25px; }
+    .badge { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+    .badge.active { color: var(--amber); }
+    .badge.idle { color: var(--green); }
+    .task-id { color: var(--muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; overflow-wrap: anywhere; }
+    .hint { color: var(--muted); font-size: 12px; line-height: 1.5; margin: 8px 0 0; }
+    .actions { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 13px; }
+    button, .button-link { border: 1px solid var(--line); border-radius: 10px; min-height: 40px; padding: 9px 13px; color: var(--text); background: var(--surface-2); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; font-weight: 650; font-size: 13px; }
+    button:hover, .button-link:hover { border-color: var(--blue); }
+    button.primary { color: white; border-color: #1267d6; background: #1267d6; }
+    button.primary:hover { background: #0a55b8; }
+    button.danger { color: var(--red); }
+    button:disabled { opacity: .5; cursor: default; }
+    .task-picker { position: relative; }
+    .native-task-select { display: none; }
+    .task-picker-button { width: 100%; min-height: 46px; justify-content: flex-start; gap: 9px; padding: 8px 11px; background: var(--surface-2); text-align: left; }
+    .task-picker-title { min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .task-picker-status { flex: 0 0 auto; color: var(--muted); }
+    .task-picker-status.active { color: var(--amber); }
+    .task-picker-status.idle { color: var(--green); }
+    .task-picker-chevron { flex: 0 0 auto; color: var(--muted); font-size: 16px; }
+    .task-picker-menu { position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; right: 0; max-height: 330px; overflow: auto; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); }
+    button.task-option { width: 100%; min-height: 42px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 9px; align-items: center; justify-content: stretch; padding: 8px 9px; border: 0; border-radius: 8px; background: transparent; text-align: left; }
+    button.task-option:hover, button.task-option.selected { border-color: transparent; background: color-mix(in srgb, var(--blue) 10%, var(--surface-2)); }
+    .task-option-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .task-picker-more { width: 100%; min-height: 38px; margin-top: 4px; border-color: transparent; background: var(--surface-2); color: var(--muted); }
+    .task-picker-more:not(:disabled):hover { color: var(--blue); background: var(--blue-soft); }
+    .task-picker-more:disabled { cursor: default; opacity: 1; }
+    .project-pill { display: inline-flex; flex: 0 0 auto; align-items: center; max-width: 180px; padding: 3px 7px; border: 1px solid currentColor; border-radius: 999px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 750; letter-spacing: .02em; }
+    .project-color-0 { color: #2873d6; background: rgba(40, 115, 214, .10); }
+    .project-color-1 { color: #8a4dd0; background: rgba(138, 77, 208, .10); }
+    .project-color-2 { color: #087a55; background: rgba(8, 122, 85, .10); }
+    .project-color-3 { color: #b15b12; background: rgba(177, 91, 18, .10); }
+    .project-color-4 { color: #c13f71; background: rgba(193, 63, 113, .10); }
+    .project-color-5 { color: #007f8d; background: rgba(0, 127, 141, .10); }
+    .project-color-6 { color: #9a6500; background: rgba(154, 101, 0, .10); }
+    .project-color-7 { color: #5369d8; background: rgba(83, 105, 216, .10); }
+    .project-color-8 { color: #758000; background: rgba(117, 128, 0, .10); }
+    .project-color-9 { color: #aa4938; background: rgba(170, 73, 56, .10); }
+    .project-neutral { color: var(--muted); background: var(--surface-2); }
+    .status { min-height: 50px; margin-top: 15px; padding: 12px 13px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 11px; color: var(--muted); line-height: 1.45; font-size: 13px; }
+    .status.good { color: var(--green); }
+    .status.warn { color: var(--amber); }
+    .status.error { color: var(--red); }
+    .reply { margin: 0; min-height: 140px; max-height: 410px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; padding: 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 11px; font: 13px/1.55 ui-sans-serif, "Segoe UI", Arial, sans-serif; }
+    .control-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 13px 0; border-top: 1px solid var(--line); }
+    .control-row:first-of-type { border-top: 0; padding-top: 0; }
+    .control-title { font-weight: 650; font-size: 13px; }
+    .control-note { color: var(--muted); font-size: 12px; line-height: 1.4; margin-top: 3px; }
+    .footnote { color: var(--muted); font-size: 11px; line-height: 1.5; margin: 14px 0 0; }
+    .stats-intro { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 18px; }
+    .stats-intro h2 { margin-bottom: 6px; font-size: 21px; }
+    .stats-intro p { color: var(--muted); margin: 0; line-height: 1.5; max-width: 720px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .stats-grid > * { min-width: 0; }
+    .stats-grid .card { margin: 0; }
+    .metric-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .metric { padding: 13px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+    .metric-value { font-size: 20px; font-weight: 750; letter-spacing: -.025em; }
+    .metric-label { color: var(--muted); font-size: 12px; margin-top: 3px; }
+    .bar-row { margin-top: 14px; }
+    .bar-label { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    progress.storage-progress { display: block; width: 100%; height: 10px; overflow: hidden; border: 0; border-radius: 999px; background: var(--surface-2); }
+    progress.storage-progress::-webkit-progress-bar { background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; }
+    progress.storage-progress::-webkit-progress-value { background: linear-gradient(90deg, var(--blue), #7549d9); border-radius: 999px; }
+    progress.storage-progress::-moz-progress-bar { background: linear-gradient(90deg, var(--blue), #7549d9); border-radius: 999px; }
+    .month-chart { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 9px; align-items: end; min-height: 165px; margin-top: 8px; }
+    .month-column { min-width: 0; text-align: center; }
+    .month-bar-wrap { height: 112px; display: flex; align-items: flex-end; justify-content: center; }
+    .month-bar { width: min(34px, 75%); min-height: 3px; border-radius: 7px 7px 3px 3px; background: linear-gradient(180deg, #7549d9, var(--blue)); }
+    .month-bar.level-0 { height: 3px; }
+    .month-bar.level-1 { height: 10%; }
+    .month-bar.level-2 { height: 20%; }
+    .month-bar.level-3 { height: 30%; }
+    .month-bar.level-4 { height: 40%; }
+    .month-bar.level-5 { height: 50%; }
+    .month-bar.level-6 { height: 60%; }
+    .month-bar.level-7 { height: 70%; }
+    .month-bar.level-8 { height: 80%; }
+    .month-bar.level-9 { height: 90%; }
+    .month-bar.level-10 { height: 100%; }
+    .month-value { color: var(--muted); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 5px; }
+    .month-label { font-size: 11px; font-weight: 650; margin-top: 3px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { color: var(--muted); font-weight: 650; text-align: left; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th:last-child, td:last-child { text-align: right; white-space: nowrap; }
+    .task-title-cell { min-width: 240px; max-width: 480px; }
+    .task-name-line { display: flex; align-items: center; gap: 7px; min-width: 0; }
+    .task-name-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .size-signal { display: inline-flex; align-items: center; padding: 3px 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); white-space: nowrap; font-size: 11px; }
+    .size-signal.top-five { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); background: color-mix(in srgb, var(--amber) 8%, transparent); }
+    .size-signal.top-one { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, var(--line)); background: color-mix(in srgb, var(--red) 8%, transparent); }
+    tr.storage-outlier td { background: color-mix(in srgb, var(--amber) 4%, transparent); }
+    .data-note { padding: 12px 13px; border-radius: 11px; background: var(--surface-2); color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .spaced { margin-top: 12px; }
+    .metrics-spaced { margin-top: 16px; }
+    .full-span { grid-column: 1 / -1; }
+    .usage-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .usage-toolbar select { width: auto; min-width: 190px; }
+    .privacy-strip { margin-bottom: 18px; display: flex; gap: 9px; flex-wrap: wrap; align-items: center; }
+    .privacy-strip .badge { color: var(--green); }
+    .usage-chart { display: grid; gap: 10px; }
+    .usage-bar-row { display: grid; grid-template-columns: minmax(100px, 1fr) minmax(150px, 2.2fr) auto; align-items: center; gap: 10px; font-size: 12px; }
+    .usage-bar-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .usage-bar-track { height: 10px; overflow: hidden; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-2); }
+    .usage-bar-fill { height: 100%; min-width: 2px; border-radius: inherit; background: linear-gradient(90deg, var(--blue), #7549d9); }
+    .usage-bar-value { color: var(--muted); white-space: nowrap; text-align: right; }
+    .insight-list { display: grid; gap: 10px; }
+    .insight { padding: 13px; border: 1px solid var(--line); border-left: 4px solid var(--blue); border-radius: 11px; background: var(--surface-2); }
+    .insight.warning { border-left-color: var(--amber); }
+    .insight.good { border-left-color: var(--green); }
+    .insight-title { font-weight: 700; font-size: 13px; }
+    .insight-detail { color: var(--muted); font-size: 12px; line-height: 1.5; margin-top: 4px; }
+    .comparison-grid, .annotation-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .comparison-grid label, .annotation-grid label { margin-top: 0; }
+    .annotation-grid .full-width { grid-column: 1 / -1; }
+    .turn-ledger button { min-height: 30px; padding: 5px 8px; }
+    .turn-ledger .selected-row td { background: color-mix(in srgb, var(--blue) 7%, transparent); }
+    .scope-note { color: var(--muted); font-size: 12px; line-height: 1.5; margin-top: 9px; }
+    .raw-command { display: block; overflow-x: auto; padding: 11px 12px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--line); color: var(--text); font: 11px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: nowrap; }
+    .editor-context-menu { position: fixed; z-index: 1000; width: min(260px, calc(100vw - 16px)); max-height: min(420px, calc(100vh - 16px)); overflow-y: auto; padding: 6px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); box-shadow: 0 18px 50px rgba(0, 0, 0, .22); }
+    .editor-context-menu button { width: 100%; min-height: 34px; justify-content: flex-start; border: 0; border-radius: 7px; padding: 7px 9px; background: transparent; text-align: left; font-weight: 500; }
+    .editor-context-menu button:not(:disabled):hover, .editor-context-menu button:not(:disabled):focus-visible { border-color: transparent; background: color-mix(in srgb, var(--blue) 11%, var(--surface-2)); outline: none; }
+    .editor-context-menu button:disabled { opacity: 1; color: var(--muted); }
+    .editor-context-menu .spelling-suggestion { color: var(--blue-strong); font-weight: 700; }
+    .editor-context-menu .menu-separator { height: 1px; margin: 5px 4px; background: var(--line); }
+    .hidden { display: none !important; }
+    @media (max-width: 850px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: minmax(0, 1fr); }
+      header { align-items: center; }
+    }
+    @media (max-width: 520px) {
+      main { width: min(100% - 20px, 1120px); margin-top: 16px; }
+      header { display: block; }
+      .connection { margin-top: 14px; }
+      .stats { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .stat { min-height: 88px; padding: 13px; }
+      .stat-value { font-size: 21px; }
+      .card { padding: 17px; }
+      .control-row { align-items: flex-start; flex-direction: column; }
+      .stats-intro { display: block; }
+      .stats-intro button { margin-top: 12px; }
+      .usage-toolbar { margin-top: 12px; }
+      .usage-toolbar select { width: 100%; }
+      .usage-bar-row { grid-template-columns: 90px minmax(90px, 1fr) auto; }
+      .comparison-grid, .annotation-grid { grid-template-columns: 1fr; }
+      .annotation-grid .full-width { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="brand">
+        <div class="mark" aria-hidden="true">CT</div>
+        <div>
+          <h1>Codex Command and Control</h1>
+          <p class="subtitle">Recover a finished task, see what is running, and keep local controls in one place.</p>
+        </div>
+      </div>
+      <div class="connection"><span id="connectionDot" class="dot"></span><span id="connectionText">Connecting to Codex…</span></div>
+    </header>
+
+    <nav class="view-tabs" aria-label="Control centre pages">
+      <button id="controlTab" class="active" type="button">Task control</button>
+      <button id="usageTab" type="button">Usage intelligence</button>
+      <button id="statsTab" type="button">Advanced stats</button>
+    </nav>
+
+    <section id="controlPage">
+    <section class="stats" aria-label="Codex status summary">
+      <article class="stat"><div class="stat-label">Usage remaining</div><div id="usageValue" class="stat-value">—</div><div id="usageNote" class="stat-note">Checking limits</div></article>
+      <article class="stat"><div class="stat-label">Resets</div><div id="resetValue" class="stat-value">—</div><div id="resetNote" class="stat-note">Current window</div></article>
+      <article class="stat"><div class="stat-label">Active local tasks</div><div id="activeValue" class="stat-value">—</div><div id="activeNote" class="stat-note">Across this Codex host</div></article>
+      <article class="stat"><div class="stat-label">Control centre</div><div id="serverValue" class="stat-value">Online</div><div id="serverNote" class="stat-note">v__TASK_CONTROL_VERSION__</div></article>
+    </section>
+
+    <section class="grid">
+      <div>
+        <article class="card">
+          <h2>Send a follow-up</h2>
+          <label id="taskPickerLabel">Codex Task Selection</label>
+          <div class="task-picker">
+            <button id="taskPickerButton" class="task-picker-button" type="button" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="taskPickerLabel taskPickerTitle" disabled>
+              <span id="taskPickerStatus" class="task-picker-status">○</span>
+              <span id="taskPickerTitle" class="task-picker-title">Loading tasks…</span>
+              <span id="taskPickerProject" class="project-pill project-neutral hidden"></span>
+              <span class="task-picker-chevron" aria-hidden="true">⌄</span>
+            </button>
+            <div id="taskPickerMenu" class="task-picker-menu hidden" role="listbox" aria-labelledby="taskPickerLabel"></div>
+            <select id="taskSelect" class="native-task-select" tabindex="-1" aria-hidden="true"><option value="">Loading tasks…</option></select>
+          </div>
+          <div class="task-meta"><span id="taskStatus" class="badge">Unknown</span><span id="taskId" class="task-id"></span></div>
+
+          <label for="message">Your follow-up</label>
+          <textarea id="message" placeholder="Write the message you want Codex to receive" spellcheck="true" autocomplete="off" autocorrect="on" autocapitalize="sentences"></textarea>
+          <div class="actions">
+            <button id="send" class="primary" disabled>Send through Codex</button>
+            <button id="refreshReply">Refresh reply</button>
+            <a id="openTask" class="button-link" href="#">Open selected task</a>
+          </div>
+          <div id="status" class="status" role="status" aria-live="polite">Loading your local tasks…</div>
+        </article>
+
+        <article class="card">
+          <h2>Latest completed reply</h2>
+          <pre id="reply" class="reply">Select a task and refresh when you want to read its latest local reply.</pre>
+        </article>
+      </div>
+
+      <aside>
+        <article class="card">
+          <h2>Controls</h2>
+          <div class="control-row">
+            <div><div class="control-title">Refresh overview</div><div class="control-note">Update task states and usage.</div></div>
+            <button id="refreshDashboard">Refresh</button>
+          </div>
+          <div class="control-row">
+            <div><div class="control-title">Stop control centre</div><div class="control-note">Codex stays open. Use the Start shortcut to return.</div></div>
+            <button id="stopServer">Stop</button>
+          </div>
+          <div id="endLocalRow" class="control-row">
+            <div><div class="control-title">End all local Codex work</div><div class="control-note">Interrupts local work and closes Codex plus this server. Cloud tasks are not cancelled.</div></div>
+            <button id="endLocal" class="danger">End all</button>
+          </div>
+          <p class="footnote">This is an unofficial local workaround. It does not repair the built-in Send button, and it will refuse to post into a task that Codex still reports as active.</p>
+        </article>
+      </aside>
+    </section>
+    </section>
+
+    <section id="statsPage" class="hidden">
+      <div class="stats-intro">
+        <div>
+          <h2>Advanced stats</h2>
+          <p>A local view of task activity, task-history storage, large histories and current Codex usage. Prompt contents are not read to build these figures.</p>
+        </div>
+        <button id="refreshStats" type="button">Refresh stats</button>
+      </div>
+
+      <section class="stats" aria-label="Advanced Codex statistics summary">
+        <article class="stat"><div class="stat-label">Local task history</div><div id="historyTaskValue" class="stat-value">—</div><div id="historyTaskNote" class="stat-note">Counting task records</div></article>
+        <article class="stat"><div class="stat-label">History storage</div><div id="historyStorageValue" class="stat-value">—</div><div id="historyStorageNote" class="stat-note">Local session records</div></article>
+        <article class="stat"><div class="stat-label">Largest task</div><div id="largestTaskValue" class="stat-value">—</div><div id="largestTaskNote" class="stat-note">By local history size</div></article>
+        <article class="stat"><div class="stat-label">Active this week</div><div id="recentTaskValue" class="stat-value">—</div><div id="recentTaskNote" class="stat-note">Updated in 7 days</div></article>
+      </section>
+
+      <section class="stats-grid">
+        <article class="card">
+          <h2>Activity and usage</h2>
+          <div class="metric-list">
+            <div class="metric"><div id="activityDay" class="metric-value">—</div><div class="metric-label">Updated in 24 hours</div></div>
+            <div class="metric"><div id="activityMonth" class="metric-value">—</div><div class="metric-label">Updated in 30 days</div></div>
+            <div class="metric"><div id="workspaceCount" class="metric-value">—</div><div class="metric-label">Known local workspaces</div></div>
+            <div class="metric"><div id="advancedUsage" class="metric-value">—</div><div id="advancedUsageLabel" class="metric-label">Usage remaining</div></div>
+          </div>
+          <div id="advancedUsageNote" class="data-note spaced">Loading the current usage window…</div>
+        </article>
+
+        <article class="card">
+          <h2>Storage split</h2>
+          <div class="bar-row">
+            <div class="bar-label"><span>Current task histories</span><strong id="currentStorageLabel">—</strong></div>
+            <progress id="currentStorageBar" class="storage-progress" max="100" value="0"></progress>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><span>Archived task histories</span><strong id="archivedStorageLabel">—</strong></div>
+            <progress id="archivedStorageBar" class="storage-progress" max="100" value="0"></progress>
+          </div>
+          <div class="metric-list metrics-spaced">
+            <div class="metric"><div id="averageStorage" class="metric-value">—</div><div class="metric-label">Average per task</div></div>
+            <div class="metric"><div id="medianStorage" class="metric-value">—</div><div class="metric-label">Median per task</div></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>Recent history by month</h2>
+          <div id="monthChart" class="month-chart" aria-label="Task history storage by last updated month"></div>
+          <p class="footnote">Each task is counted in the month its local history was most recently updated. Bar height represents storage.</p>
+        </article>
+
+        <article class="card">
+          <h2>What these numbers mean</h2>
+          <div class="data-note">History size is disk space used by local Codex session records, not token usage or model cost. Usage remaining and reset time come from the signed-in Codex app when available.</div>
+          <div id="sizeThresholdNote" class="data-note spaced">No proven file-size threshold is known to break a Codex task. Local outlier markers are comparative only.</div>
+          <div class="metric-list spaced">
+            <div class="metric"><div id="currentTaskCount" class="metric-value">—</div><div class="metric-label">Current histories</div></div>
+            <div class="metric"><div id="archivedTaskCount" class="metric-value">—</div><div class="metric-label">Archived histories</div></div>
+          </div>
+        </article>
+
+        <article class="card full-span">
+          <h2>Largest local task histories</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Task</th><th>Status</th><th>Size signal</th><th>Last updated</th><th>Storage</th></tr></thead>
+              <tbody id="largestTasksBody"><tr><td colspan="5">Loading local history statistics…</td></tr></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </section>
+
+    <section id="usagePage" class="hidden">
+      <div class="stats-intro">
+        <div>
+          <h2>Usage intelligence</h2>
+          <p>Compare the complete cost of Codex turns: model generations, repeated context, cached and uncached input, output, reasoning, tools, time, compaction and outcomes.</p>
+        </div>
+        <div class="usage-toolbar">
+          <select id="usageScope" aria-label="Usage analysis scope">
+            <option value="task">Selected task</option>
+            <option value="recent">Recent local tasks</option>
+          </select>
+          <button id="refreshUsage" type="button">Analyze</button>
+          <button id="analyzeAllUsage" type="button" disabled hidden>Analyze all</button>
+          <button id="exportUsage" type="button" disabled>Export JSON</button>
+        </div>
+      </div>
+
+      <div class="privacy-strip">
+        <span class="badge">Local analysis</span>
+        <span class="badge">No prompt text</span>
+        <span class="badge">No command text or tool output</span>
+        <span id="usageCoverage" class="scope-note">Choose a scope and analyze local session records.</span>
+      </div>
+
+      <section class="stats" aria-label="Usage intelligence summary">
+        <article class="stat"><div class="stat-label">Aggregate tokens</div><div id="totalTokenValue" class="stat-value">—</div><div id="totalTokenNote" class="stat-note">Input plus output across model calls</div></article>
+        <article class="stat"><div class="stat-label">Cached input</div><div id="cacheRatioValue" class="stat-value">—</div><div id="cacheRatioNote" class="stat-note">Subset of input tokens</div></article>
+        <article class="stat"><div class="stat-label">Turns analyzed</div><div id="turnCountValue" class="stat-value">—</div><div id="turnCountNote" class="stat-note">Waiting for analysis</div></article>
+        <article class="stat"><div class="stat-label">Largest turn</div><div id="topTurnValue" class="stat-value">—</div><div id="topTurnNote" class="stat-note">By aggregate tokens</div></article>
+      </section>
+
+      <section class="stats-grid">
+        <article class="card">
+          <h2>Token accounting</h2>
+          <div class="metric-list">
+            <div class="metric"><div id="inputTokenValue" class="metric-value">—</div><div class="metric-label">Input tokens</div></div>
+            <div class="metric"><div id="uncachedTokenValue" class="metric-value">—</div><div class="metric-label">Uncached input</div></div>
+            <div class="metric"><div id="cacheWriteTokenValue" class="metric-value">—</div><div class="metric-label">Cache-write input</div></div>
+            <div class="metric"><div id="outputTokenValue" class="metric-value">—</div><div class="metric-label">Output tokens</div></div>
+            <div class="metric"><div id="reasoningTokenValue" class="metric-value">—</div><div class="metric-label">Reasoning, included in output</div></div>
+            <div class="metric"><div id="modelCallValue" class="metric-value">—</div><div class="metric-label">Model generations</div></div>
+            <div class="metric"><div id="delegatedTokenValue" class="metric-value">—</div><div class="metric-label">Delegated/subagent tokens</div></div>
+            <div class="metric"><div id="apiEstimateValue" class="metric-value">—</div><div class="metric-label">API-equivalent estimate</div></div>
+            <div class="metric"><div id="budgetStatusValue" class="metric-value">Off</div><div class="metric-label">Local reference budgets</div></div>
+          </div>
+          <p class="footnote">Aggregate turn tokens can greatly exceed the visible prompt because each generation may carry instructions, conversation context, tools and results.</p>
+        </article>
+
+        <article class="card">
+          <h2>Context, time and reliability</h2>
+          <div class="metric-list">
+            <div class="metric"><div id="maxContextValue" class="metric-value">—</div><div class="metric-label">Highest context occupancy</div></div>
+            <div class="metric"><div id="compactionValue" class="metric-value">—</div><div class="metric-label">Compactions</div></div>
+            <div class="metric"><div id="medianTurnValue" class="metric-value">—</div><div class="metric-label">Median turn duration</div></div>
+            <div class="metric"><div id="p95TurnValue" class="metric-value">—</div><div class="metric-label">95th-percentile duration</div></div>
+            <div class="metric"><div id="toolCallValue" class="metric-value">—</div><div class="metric-label">Tool actions</div></div>
+            <div class="metric"><div id="toolFailureValue" class="metric-value">—</div><div class="metric-label">Non-success tool items</div></div>
+            <div class="metric"><div id="followUpValue" class="metric-value">—</div><div class="metric-label">Tokens after first turns</div></div>
+            <div class="metric"><div id="changedFileValue" class="metric-value">—</div><div class="metric-label">File-change entries</div></div>
+          </div>
+        </article>
+
+        <article class="card full-span">
+          <h2>Turn-cost trend</h2>
+          <div id="tokenTrend" class="usage-chart"><div class="data-note">Analyze usage to see turn-by-turn cost.</div></div>
+        </article>
+
+        <article class="card full-span">
+          <h2>Prompt Lab</h2>
+          <p class="hint">Compare like-for-like turns. Token use alone does not determine quality, so outcome tags are shown beside resource use.</p>
+          <div class="comparison-grid spaced">
+            <div><label for="compareTurnA">Turn A</label><select id="compareTurnA"><option value="">Choose a turn</option></select></div>
+            <div><label for="compareTurnB">Turn B</label><select id="compareTurnB"><option value="">Choose a turn</option></select></div>
+          </div>
+          <div class="table-wrap spaced">
+            <table>
+              <thead><tr><th>Measurement</th><th>Turn A</th><th>Turn B</th><th>Difference</th></tr></thead>
+              <tbody id="comparisonBody"><tr><td colspan="4">Choose two turns to compare.</td></tr></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>Outcome tag</h2>
+          <p class="hint">Optional local metadata makes cost-versus-quality analysis possible. No prompt content is saved.</p>
+          <div class="annotation-grid spaced">
+            <div class="full-width"><label for="annotationTurn">Turn</label><select id="annotationTurn"><option value="">Choose a turn</option></select></div>
+            <div><label for="annotationRating">Quality</label><select id="annotationRating"><option value="">Not rated</option><option value="5">5 — Excellent</option><option value="4">4 — Good</option><option value="3">3 — Usable</option><option value="2">2 — Weak</option><option value="1">1 — Poor</option></select></div>
+            <div><label for="annotationAccepted">Accepted result</label><select id="annotationAccepted"><option value="">Not set</option><option value="true">Yes</option><option value="false">No</option></select></div>
+            <div><label for="annotationCorrection">Needed correction</label><select id="annotationCorrection"><option value="">Not set</option><option value="true">Yes</option><option value="false">No</option></select></div>
+            <div><label for="annotationReviewMinutes">Review minutes</label><input id="annotationReviewMinutes" type="number" min="0" max="10080" step="1" placeholder="Optional"></div>
+            <div><label for="annotationCategory">Task category</label><input id="annotationCategory" maxlength="80" placeholder="Coding, research, writing…"></div>
+            <div><label for="annotationStrategy">Prompt strategy</label><input id="annotationStrategy" maxlength="80" placeholder="Detailed, concise, fresh task…"></div>
+          </div>
+          <div class="actions"><button id="saveAnnotation" class="primary" type="button" disabled>Save outcome</button><button id="deleteAnnotation" type="button" disabled>Clear outcome</button></div>
+          <div id="annotationStatus" class="scope-note">Choose a turn to add an outcome.</div>
+        </article>
+
+        <article class="card">
+          <h2>Efficiency observations</h2>
+          <div id="insightList" class="insight-list"><div class="data-note">Analyze usage to generate evidence-based observations.</div></div>
+        </article>
+
+        <article class="card">
+          <h2>Models and reasoning</h2>
+          <div id="modelBreakdown" class="usage-chart"><div class="data-note">No model data loaded.</div></div>
+          <h2 class="metrics-spaced">Reasoning effort</h2>
+          <div id="effortBreakdown" class="usage-chart"><div class="data-note">No reasoning data loaded.</div></div>
+        </article>
+
+        <article class="card">
+          <h2>Projects and tools</h2>
+          <div id="projectBreakdown" class="usage-chart"><div class="data-note">No project data loaded.</div></div>
+          <h2 class="metrics-spaced">Most-used tools</h2>
+          <div id="toolBreakdown" class="usage-chart"><div class="data-note">No tool data loaded.</div></div>
+        </article>
+
+        <article class="card full-span">
+          <h2>Time, categories and prompt strategies</h2>
+          <div class="stats-grid">
+            <div><h2>Daily usage</h2><div id="dailyBreakdown" class="usage-chart"><div class="data-note">No daily data loaded.</div></div></div>
+            <div><h2>Task categories</h2><div id="categoryBreakdown" class="usage-chart"><div class="data-note">Add outcome categories to compare them.</div></div></div>
+            <div><h2>Prompt strategies</h2><div id="strategyBreakdown" class="usage-chart"><div class="data-note">Add strategy tags to compare them.</div></div></div>
+            <div><h2>Outcome summary</h2><div id="outcomeSummary" class="metric-list"><div class="metric"><div class="metric-value">—</div><div class="metric-label">No outcomes tagged</div></div></div></div>
+          </div>
+        </article>
+
+        <article class="card full-span">
+          <h2>Turn-cost ledger</h2>
+          <div class="table-wrap">
+            <table class="turn-ledger">
+              <thead><tr><th>Task / turn</th><th>Model</th><th>Input</th><th>Cached</th><th>Output</th><th>Calls</th><th>Tools</th><th>Duration</th><th>Total</th></tr></thead>
+              <tbody id="turnLedgerBody"><tr><td colspan="9">Analyze usage to build the ledger.</td></tr></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card full-span">
+          <h2>Ask Codex to analyze the raw statistics</h2>
+          <p class="hint">A Codex task can run the installed local reporter, inspect its privacy-safe JSON and advise on context growth, expensive turns, retries, model choice and prompt experiments.</p>
+          <code class="raw-command">&amp; "$env:LOCALAPPDATA\CodexTaskControl\Get-CodexUsageStats.ps1" -ThreadId &lt;task-id&gt; -Pretty</code>
+          <p class="footnote">The report omits prompt text, command text, file paths, tool arguments, tool outputs and account identifiers. Subscription usage and model-token totals remain separate measurements.</p>
+        </article>
+      </section>
+    </section>
+  </main>
+
+  <div id="editorContextMenu" class="editor-context-menu hidden" role="menu" aria-label="Writing options"></div>
+
+  <script nonce="__TASK_CONTROL_NONCE__">
+    const token = __TASK_CONTROL_TOKEN__;
+    const idPattern = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
+    const elements = Object.fromEntries([
+      'controlTab','usageTab','statsTab','controlPage','usagePage','statsPage','taskSelect','taskPickerButton','taskPickerStatus','taskPickerTitle','taskPickerProject','taskPickerMenu','taskStatus','taskId','message','editorContextMenu','send','refreshReply','openTask','status','reply',
+      'connectionDot','connectionText','usageValue','usageNote','resetValue','resetNote','activeValue','activeNote',
+      'serverValue','serverNote','refreshDashboard','stopServer','endLocal','endLocalRow','refreshStats',
+      'historyTaskValue','historyTaskNote','historyStorageValue','historyStorageNote','largestTaskValue','largestTaskNote','recentTaskValue','recentTaskNote',
+      'activityDay','activityMonth','workspaceCount','advancedUsage','advancedUsageLabel','advancedUsageNote',
+      'currentStorageLabel','currentStorageBar','archivedStorageLabel','archivedStorageBar','averageStorage','medianStorage',
+      'monthChart','currentTaskCount','archivedTaskCount','largestTasksBody','sizeThresholdNote',
+      'usageScope','refreshUsage','analyzeAllUsage','exportUsage','usageCoverage','totalTokenValue','totalTokenNote','cacheRatioValue','cacheRatioNote','turnCountValue','turnCountNote','topTurnValue','topTurnNote',
+      'inputTokenValue','uncachedTokenValue','cacheWriteTokenValue','outputTokenValue','reasoningTokenValue','modelCallValue','delegatedTokenValue','apiEstimateValue','budgetStatusValue','maxContextValue','compactionValue','medianTurnValue','p95TurnValue','toolCallValue','toolFailureValue','followUpValue','changedFileValue',
+      'tokenTrend','compareTurnA','compareTurnB','comparisonBody','annotationTurn','annotationRating','annotationAccepted','annotationCorrection','annotationReviewMinutes','annotationCategory','annotationStrategy','saveAnnotation','deleteAnnotation','annotationStatus','insightList','modelBreakdown','effortBreakdown','projectBreakdown','toolBreakdown','dailyBreakdown','categoryBreakdown','strategyBreakdown','outcomeSummary','turnLedgerBody'
+    ].map((id) => [id, document.getElementById(id)]));
+    const query = new URLSearchParams(location.search);
+    const queryThreadId = query.get('threadId');
+    const explicitThreadId = idPattern.test(queryThreadId || '') ? queryThreadId.toLowerCase() : null;
+    const showcaseMode = query.get('showcase') === 'public';
+    let tasks = [];
+    let taskPaging = { pageSize: 20, nextOffset: 0, total: 0, hasMore: false, loading: false };
+    let initializedSelection = false;
+    let statsLoaded = false;
+    let usageLoaded = false;
+    let usageReport = null;
+    let usageAnalyzeAll = false;
+    let waitTimer = null;
+    let previousTurnId = null;
+    let editorMenuRequestId = 0;
+    let editorMenuPoint = { x: 0, y: 0 };
+    const projectColors = new Map();
+    const showcaseTaskTitles = new Map();
+    const showcaseProjectLabels = new Map();
+    const showcaseReplacements = new Map();
+    const showcaseCustomLabels = new Map();
+    const showcaseTaskNameOptions = [
+      'Research and source review',
+      'Website release preparation',
+      'Document quality review',
+      'Usage dashboard analysis',
+      'Media workflow planning',
+      'Accessibility improvements',
+      'Local automation setup',
+      'Release packaging',
+      'Data validation',
+      'Performance investigation',
+    ];
+    const editorWordPattern = /^[\p{L}\p{M}]+(?:['’\-][\p{L}\p{M}]+)*$/u;
+    const editorWordCharacter = /^[\p{L}\p{M}'’\-]$/u;
+
+    elements.message.lang = navigator.language || document.documentElement.lang || 'en-US';
+
+    async function api(path, data = {}) {
+      const response = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Codex-Task-Control-Token': token },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Codex did not respond.');
+      return result;
+    }
+
+    function setConnection(online, text) {
+      elements.connectionDot.classList.toggle('online', online);
+      elements.connectionText.textContent = text;
+    }
+
+    function setStatus(text, kind = '') {
+      elements.status.textContent = text;
+      elements.status.className = `status ${kind}`.trim();
+    }
+
+    function displayTaskTitle(taskOrTitle, fallbackId = null) {
+      const task = taskOrTitle && typeof taskOrTitle === 'object' ? taskOrTitle : null;
+      const original = String(task?.title || taskOrTitle || 'Untitled task');
+      if (!showcaseMode) return original;
+      const key = String(task?.id || task?.threadId || fallbackId || original);
+      if (!showcaseTaskTitles.has(key)) {
+        const index = showcaseTaskTitles.size;
+        const base = showcaseTaskNameOptions[index % showcaseTaskNameOptions.length];
+        const suffix = index >= showcaseTaskNameOptions.length ? ` ${Math.floor(index / showcaseTaskNameOptions.length) + 1}` : '';
+        showcaseTaskTitles.set(key, `${base}${suffix}`);
+      }
+      const display = showcaseTaskTitles.get(key);
+      if (original) showcaseReplacements.set(original, display);
+      return display;
+    }
+
+    function displayProjectLabel(label) {
+      const original = String(label || 'Projectless');
+      if (!showcaseMode || original === 'Projectless') return original;
+      if (!showcaseProjectLabels.has(original)) {
+        const index = showcaseProjectLabels.size;
+        showcaseProjectLabels.set(original, `Example project ${String.fromCharCode(65 + (index % 26))}${index >= 26 ? Math.floor(index / 26) + 1 : ''}`);
+      }
+      const display = showcaseProjectLabels.get(original);
+      showcaseReplacements.set(original, display);
+      return display;
+    }
+
+    function displayCustomLabel(label, kind) {
+      const original = String(label || 'Unknown');
+      if (!showcaseMode) return original;
+      const key = `${kind}:${original}`;
+      if (!showcaseCustomLabels.has(key)) showcaseCustomLabels.set(key, `${kind} ${showcaseCustomLabels.size + 1}`);
+      return showcaseCustomLabels.get(key);
+    }
+
+    function showcaseText(value) {
+      let text = String(value || '');
+      if (!showcaseMode) return text;
+      const replacements = [...showcaseReplacements.entries()].sort((left, right) => right[0].length - left[0].length);
+      for (const [original, display] of replacements) text = text.split(original).join(display);
+      return text;
+    }
+
+    function characterAt(text, index) {
+      if (index < 0 || index >= text.length) return null;
+      const codePoint = text.codePointAt(index);
+      const value = String.fromCodePoint(codePoint);
+      return { value, length: value.length };
+    }
+
+    function previousCharacterStart(text, index) {
+      if (index <= 0) return -1;
+      const candidate = index - 1;
+      const code = text.charCodeAt(candidate);
+      return code >= 0xDC00 && code <= 0xDFFF && candidate > 0 ? candidate - 1 : candidate;
+    }
+
+    function wordRangeAtCaret(input) {
+      const text = input.value;
+      const selectionStart = input.selectionStart ?? 0;
+      const selectionEnd = input.selectionEnd ?? selectionStart;
+      if (selectionEnd > selectionStart) {
+        const selected = text.slice(selectionStart, selectionEnd);
+        return editorWordPattern.test(selected) ? { start: selectionStart, end: selectionEnd, word: selected } : null;
+      }
+
+      let probe = Math.min(selectionStart, text.length);
+      const current = characterAt(text, probe);
+      if (!current || !editorWordCharacter.test(current.value)) {
+        const previous = previousCharacterStart(text, probe);
+        const previousCharacter = characterAt(text, previous);
+        if (previous < 0 || !previousCharacter || !editorWordCharacter.test(previousCharacter.value)) return null;
+        probe = previous;
+      }
+
+      let start = probe;
+      while (start > 0) {
+        const previous = previousCharacterStart(text, start);
+        const candidate = characterAt(text, previous);
+        if (previous < 0 || !candidate || !editorWordCharacter.test(candidate.value)) break;
+        start = previous;
+      }
+      let end = probe;
+      while (end < text.length) {
+        const candidate = characterAt(text, end);
+        if (!candidate || !editorWordCharacter.test(candidate.value)) break;
+        end += candidate.length;
+      }
+      const word = text.slice(start, end);
+      return editorWordPattern.test(word) ? { start, end, word } : null;
+    }
+
+    function matchWordCase(suggestion, original) {
+      if (original === original.toLocaleUpperCase(elements.message.lang)) {
+        return suggestion.toLocaleUpperCase(elements.message.lang);
+      }
+      const characters = [...original];
+      if (characters.length && characters[0] === characters[0].toLocaleUpperCase(elements.message.lang)) {
+        const suggestedCharacters = [...suggestion];
+        if (suggestedCharacters.length) {
+          return suggestedCharacters[0].toLocaleUpperCase(elements.message.lang) + suggestedCharacters.slice(1).join('');
+        }
+      }
+      return suggestion;
+    }
+
+    function closeEditorContextMenu() {
+      editorMenuRequestId += 1;
+      elements.editorContextMenu.classList.add('hidden');
+      elements.editorContextMenu.replaceChildren();
+    }
+
+    function contextMenuButton(label, action, options = {}) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.setAttribute('role', 'menuitem');
+      button.textContent = label;
+      button.disabled = options.disabled === true;
+      if (options.className) button.className = options.className;
+      if (action) button.addEventListener('click', action);
+      return button;
+    }
+
+    function contextMenuSeparator() {
+      const separator = document.createElement('div');
+      separator.className = 'menu-separator';
+      separator.setAttribute('role', 'separator');
+      return separator;
+    }
+
+    function replaceEditorText(start, end, text) {
+      elements.message.focus();
+      elements.message.setSelectionRange(start, end);
+      let inserted = false;
+      try { inserted = document.execCommand('insertText', false, text); } catch { inserted = false; }
+      if (!inserted) {
+        elements.message.setRangeText(text, start, end, 'end');
+        elements.message.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
+
+    function replaceEditorWord(range, suggestion) {
+      replaceEditorText(range.start, range.end, matchWordCase(suggestion, range.word));
+      closeEditorContextMenu();
+    }
+
+    function runEditorCommand(command) {
+      elements.message.focus();
+      try { document.execCommand(command); } catch { /* Browser support differs by command. */ }
+      closeEditorContextMenu();
+    }
+
+    async function pasteIntoEditor() {
+      try {
+        if (!navigator.clipboard?.readText) throw new Error('Clipboard access is unavailable.');
+        const text = await navigator.clipboard.readText();
+        replaceEditorText(elements.message.selectionStart ?? 0, elements.message.selectionEnd ?? 0, text);
+        closeEditorContextMenu();
+      } catch {
+        closeEditorContextMenu();
+        setStatus('The browser blocked clipboard access. Use Ctrl+V to paste.', 'warn');
+      }
+    }
+
+    function appendEditorActions() {
+      elements.editorContextMenu.append(
+        contextMenuSeparator(),
+        contextMenuButton('Undo', () => runEditorCommand('undo')),
+        contextMenuButton('Redo', () => runEditorCommand('redo')),
+        contextMenuSeparator(),
+        contextMenuButton('Cut', () => runEditorCommand('cut'), { disabled: elements.message.selectionStart === elements.message.selectionEnd }),
+        contextMenuButton('Copy', () => runEditorCommand('copy'), { disabled: elements.message.selectionStart === elements.message.selectionEnd }),
+        contextMenuButton('Paste', pasteIntoEditor),
+        contextMenuSeparator(),
+        contextMenuButton('Select all', () => {
+          elements.message.focus();
+          elements.message.setSelectionRange(0, elements.message.value.length);
+          closeEditorContextMenu();
+        }),
+      );
+    }
+
+    function positionEditorContextMenu() {
+      const menu = elements.editorContextMenu;
+      const margin = 8;
+      menu.style.left = `${Math.max(margin, Math.min(editorMenuPoint.x, window.innerWidth - menu.offsetWidth - margin))}px`;
+      menu.style.top = `${Math.max(margin, Math.min(editorMenuPoint.y, window.innerHeight - menu.offsetHeight - margin))}px`;
+    }
+
+    function renderEditorContextMenu(range, spellingResult = null) {
+      const menu = elements.editorContextMenu;
+      menu.replaceChildren();
+      if (!range) {
+        menu.append(contextMenuButton('Right-click a word for spelling suggestions', null, { disabled: true }));
+      } else if (!spellingResult) {
+        menu.append(contextMenuButton(`Checking “${range.word}”…`, null, { disabled: true }));
+      } else if (!spellingResult.available) {
+        menu.append(contextMenuButton('Spelling suggestions unavailable', null, { disabled: true }));
+      } else if (spellingResult.misspelled === false) {
+        menu.append(contextMenuButton('Spelling looks correct', null, { disabled: true }));
+      } else if (spellingResult.suggestions?.length) {
+        for (const suggestion of spellingResult.suggestions) {
+          const casedSuggestion = matchWordCase(suggestion, range.word);
+          menu.append(contextMenuButton(casedSuggestion, () => replaceEditorWord(range, suggestion), { className: 'spelling-suggestion' }));
+        }
+      } else {
+        menu.append(contextMenuButton('No spelling suggestions found', null, { disabled: true }));
+      }
+      appendEditorActions();
+      menu.classList.remove('hidden');
+      positionEditorContextMenu();
+    }
+
+    async function openEditorContextMenu(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      editorMenuRequestId += 1;
+      const requestId = editorMenuRequestId;
+      editorMenuPoint = { x: event.clientX, y: event.clientY };
+      const range = wordRangeAtCaret(elements.message);
+      renderEditorContextMenu(range);
+      if (!range) return;
+      try {
+        const result = await api('/api/spelling', { word: range.word, language: elements.message.lang || 'en-US' });
+        if (requestId !== editorMenuRequestId || elements.editorContextMenu.classList.contains('hidden')) return;
+        renderEditorContextMenu(range, result);
+      } catch {
+        if (requestId !== editorMenuRequestId || elements.editorContextMenu.classList.contains('hidden')) return;
+        renderEditorContextMenu(range, { available: false });
+      }
+    }
+
+    function selectedTask() {
+      return tasks.find((task) => task.id === elements.taskSelect.value) || null;
+    }
+
+    function formatTaskStatus(value) {
+      if (value === 'notLoaded' || value === 'not loaded') return 'Not loaded';
+      if (!value) return 'Unknown';
+      return value.charAt(0).toUpperCase() + value.slice(1);
+    }
+
+    function projectColorClass(label) {
+      const name = label || 'Projectless';
+      if (name === 'Projectless') return 'project-neutral';
+      if (!projectColors.has(name)) projectColors.set(name, `project-color-${projectColors.size % 10}`);
+      return projectColors.get(name);
+    }
+
+    function makeProjectPill(label) {
+      const pill = document.createElement('span');
+      pill.className = `project-pill ${projectColorClass(label)}`;
+      pill.textContent = displayProjectLabel(label);
+      pill.title = displayProjectLabel(label);
+      return pill;
+    }
+
+    function closeTaskPicker() {
+      elements.taskPickerMenu.classList.add('hidden');
+      elements.taskPickerButton.setAttribute('aria-expanded', 'false');
+    }
+
+    function relativeTime(timestamp) {
+      if (!timestamp) return 'unknown update time';
+      const seconds = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
+      if (seconds < 60) return 'updated just now';
+      if (seconds < 3600) return `updated ${Math.floor(seconds / 60)}m ago`;
+      if (seconds < 86400) return `updated ${Math.floor(seconds / 3600)}h ago`;
+      return `updated ${Math.floor(seconds / 86400)}d ago`;
+    }
+
+    function updateSelectedTask() {
+      const task = selectedTask();
+      if (!task) {
+        elements.taskStatus.textContent = 'Unavailable';
+        elements.taskStatus.className = 'badge';
+        elements.taskId.textContent = '';
+        elements.taskPickerStatus.textContent = '○';
+        elements.taskPickerStatus.className = 'task-picker-status';
+        elements.taskPickerTitle.textContent = 'Choose a Codex task…';
+        elements.taskPickerProject.textContent = '';
+        elements.taskPickerProject.className = 'project-pill project-neutral hidden';
+        elements.openTask.href = '#';
+        elements.send.disabled = true;
+        for (const option of elements.taskPickerMenu.querySelectorAll('.task-option')) option.classList.remove('selected');
+        return;
+      }
+      elements.taskStatus.textContent = formatTaskStatus(task.status);
+      elements.taskStatus.className = `badge ${task.status}`;
+      elements.taskId.textContent = showcaseMode ? `Local task · ${relativeTime(task.updatedAt)}` : `${task.id} · ${relativeTime(task.updatedAt)}`;
+      elements.taskPickerStatus.textContent = task.status === 'active' ? '●' : '○';
+      elements.taskPickerStatus.className = `task-picker-status ${task.status}`;
+      elements.taskPickerTitle.textContent = displayTaskTitle(task);
+      elements.taskPickerProject.textContent = displayProjectLabel(task.projectLabel);
+      elements.taskPickerProject.className = `project-pill ${projectColorClass(task.projectLabel)}`;
+      elements.openTask.href = `codex://threads/${task.id}`;
+      elements.send.disabled = task.status === 'active';
+      for (const option of elements.taskPickerMenu.querySelectorAll('.task-option')) {
+        const selected = option.dataset.taskId === task.id;
+        option.classList.toggle('selected', selected);
+        option.setAttribute('aria-selected', String(selected));
+      }
+    }
+
+    function updateTaskPaging(page, preservePosition = false) {
+      if (!page) return;
+      const total = Number(page.total) || 0;
+      const nextOffset = Number(page.nextOffset) || 0;
+      taskPaging.pageSize = Number(page.pageSize) || taskPaging.pageSize;
+      taskPaging.total = total;
+      if (!preservePosition) taskPaging.nextOffset = nextOffset;
+      taskPaging.hasMore = preservePosition ? taskPaging.nextOffset < total : page.hasMore === true;
+    }
+
+    function appendTaskPickerFooter() {
+      if (!tasks.length) return;
+      const footer = document.createElement('button');
+      footer.type = 'button';
+      footer.className = 'task-picker-more';
+      if (taskPaging.loading) {
+        footer.textContent = 'Loading more tasks…';
+        footer.disabled = true;
+      } else if (taskPaging.hasMore) {
+        const remaining = Math.max(0, taskPaging.total - tasks.length);
+        footer.textContent = `Load ${Math.min(taskPaging.pageSize, remaining)} more · ${tasks.length} of ${taskPaging.total}`;
+        footer.addEventListener('click', loadMoreTasks);
+      } else {
+        footer.textContent = `All ${taskPaging.total || tasks.length} tasks loaded`;
+        footer.disabled = true;
+      }
+      elements.taskPickerMenu.append(footer);
+    }
+
+    function renderTasks(nextTasks, options = {}) {
+      const prior = elements.taskSelect.value;
+      const scrollTop = elements.taskPickerMenu.scrollTop;
+      if (options.append) {
+        const merged = new Map(tasks.map((task) => [task.id, task]));
+        for (const task of nextTasks) merged.set(task.id, { ...(merged.get(task.id) || {}), ...task });
+        tasks = [...merged.values()].sort((a, b) => (Number(b.updatedAt) || 0) - (Number(a.updatedAt) || 0));
+      } else {
+        tasks = [...nextTasks];
+      }
+      updateTaskPaging(options.page, options.preservePaging === true);
+      elements.taskSelect.replaceChildren();
+      elements.taskPickerMenu.replaceChildren();
+      elements.taskPickerButton.disabled = false;
+      const placeholder = document.createElement('option');
+      placeholder.textContent = 'Choose a Codex task…';
+      placeholder.value = '';
+      elements.taskSelect.append(placeholder);
+      if (!tasks.length) {
+        placeholder.textContent = 'No local Codex tasks found';
+        elements.taskPickerTitle.textContent = placeholder.textContent;
+        elements.taskPickerButton.disabled = true;
+        updateSelectedTask();
+        return;
+      }
+      for (const task of tasks) {
+        const option = document.createElement('option');
+        option.value = task.id;
+        option.textContent = `${task.status === 'active' ? '●' : '○'} ${displayTaskTitle(task)} — ${displayProjectLabel(task.projectLabel)}`;
+        elements.taskSelect.append(option);
+
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'task-option';
+        item.dataset.taskId = task.id;
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', 'false');
+        const state = document.createElement('span');
+        state.className = `task-picker-status ${task.status}`;
+        state.textContent = task.status === 'active' ? '●' : '○';
+        const title = document.createElement('span');
+        title.className = 'task-option-title';
+        title.textContent = displayTaskTitle(task);
+        title.title = displayTaskTitle(task);
+        item.append(state, title, makeProjectPill(task.projectLabel));
+        item.addEventListener('click', () => {
+          elements.taskSelect.value = task.id;
+          elements.taskSelect.dispatchEvent(new Event('change'));
+          closeTaskPicker();
+        });
+        elements.taskPickerMenu.append(item);
+      }
+      appendTaskPickerFooter();
+      let preferred = tasks.some((task) => task.id === prior) ? prior : '';
+      if (!initializedSelection) {
+        preferred = explicitThreadId && tasks.some((task) => task.id === explicitThreadId) ? explicitThreadId : '';
+        initializedSelection = true;
+      }
+      elements.taskSelect.value = preferred;
+      updateSelectedTask();
+      if (taskPaging.total) elements.activeNote.textContent = `${taskPaging.total} local tasks · ${tasks.length} loaded`;
+      if (options.append || options.preserveScroll) elements.taskPickerMenu.scrollTop = scrollTop;
+    }
+
+    async function loadMoreTasks() {
+      if (taskPaging.loading || !taskPaging.hasMore) return;
+      taskPaging.loading = true;
+      renderTasks([], { append: true, preserveScroll: true });
+      try {
+        const result = await api('/api/tasks', { offset: taskPaging.nextOffset });
+        taskPaging.loading = false;
+        renderTasks(result.tasks || [], { append: true, page: result.taskPage, preserveScroll: true });
+      } catch (error) {
+        taskPaging.loading = false;
+        renderTasks([], { append: true, preserveScroll: true });
+        setStatus(error.message, 'error');
+      }
+    }
+
+    function formatReset(unixSeconds) {
+      if (!unixSeconds) return 'Not available';
+      return new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(unixSeconds * 1000));
+    }
+
+    function formatBytes(bytes) {
+      const value = Number(bytes) || 0;
+      if (value < 1024) return `${value} B`;
+      const units = ['KB', 'MB', 'GB', 'TB'];
+      let size = value / 1024;
+      let unit = units[0];
+      for (let index = 1; index < units.length && size >= 1024; index += 1) {
+        size /= 1024;
+        unit = units[index];
+      }
+      const digits = size >= 100 ? 0 : size >= 10 ? 1 : 2;
+      return `${size.toFixed(digits)} ${unit}`;
+    }
+
+    function formatDate(timestamp) {
+      if (!timestamp) return 'Unknown';
+      return new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(timestamp));
+    }
+
+    function formatTokens(value) {
+      const tokens = Number(value) || 0;
+      if (tokens < 1000) return tokens.toLocaleString();
+      if (tokens < 1000000) return `${(tokens / 1000).toFixed(tokens >= 100000 ? 0 : 1)}K`;
+      if (tokens < 1000000000) return `${(tokens / 1000000).toFixed(tokens >= 100000000 ? 0 : tokens >= 10000000 ? 1 : 2)}M`;
+      return `${(tokens / 1000000000).toFixed(tokens >= 10000000000 ? 1 : 2)}B`;
+    }
+
+    function formatDuration(milliseconds) {
+      const value = Number(milliseconds) || 0;
+      if (value < 1000) return `${Math.round(value)}ms`;
+      const seconds = value / 1000;
+      if (seconds < 60) return `${seconds.toFixed(seconds >= 10 ? 0 : 1)}s`;
+      const minutes = seconds / 60;
+      if (minutes < 60) return `${minutes.toFixed(minutes >= 10 ? 0 : 1)}m`;
+      return `${(minutes / 60).toFixed(1)}h`;
+    }
+
+    function formatCurrency(value) {
+      if (value === null || value === undefined) return 'Not configured';
+      const amount = Number(value) || 0;
+      return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', minimumFractionDigits: amount < 1 ? 3 : 2, maximumFractionDigits: amount < 1 ? 4 : 2 }).format(amount);
+    }
+
+    function setPage(page, updateUrl = true) {
+      const target = ['control', 'usage', 'stats'].includes(page) ? page : 'control';
+      elements.controlPage.classList.toggle('hidden', target !== 'control');
+      elements.usagePage.classList.toggle('hidden', target !== 'usage');
+      elements.statsPage.classList.toggle('hidden', target !== 'stats');
+      elements.controlTab.classList.toggle('active', target === 'control');
+      elements.usageTab.classList.toggle('active', target === 'usage');
+      elements.statsTab.classList.toggle('active', target === 'stats');
+      if (updateUrl) {
+        const url = new URL(location.href);
+        if (target === 'control') url.searchParams.delete('view');
+        else url.searchParams.set('view', target);
+        history.replaceState(null, '', url);
+      }
+      if (target === 'stats' && !statsLoaded) refreshAdvancedStats();
+      if (target === 'usage' && !usageLoaded) refreshUsageIntelligence();
+    }
+
+    function renderLargestTasks(items, p95Bytes, p99Bytes) {
+      elements.largestTasksBody.replaceChildren();
+      if (!items.length) {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 5;
+        cell.textContent = 'No local task histories were found.';
+        row.append(cell);
+        elements.largestTasksBody.append(row);
+        return;
+      }
+      for (const task of items) {
+        const row = document.createElement('tr');
+        const isTopOne = p99Bytes > 0 && task.bytes >= p99Bytes;
+        const isTopFive = p95Bytes > 0 && task.bytes >= p95Bytes;
+        row.classList.toggle('storage-outlier', isTopFive);
+        const title = document.createElement('td');
+        title.className = 'task-title-cell';
+        const titleLine = document.createElement('div');
+        titleLine.className = 'task-name-line';
+        const titleText = document.createElement('span');
+        titleText.className = 'task-name-text';
+        titleText.textContent = displayTaskTitle(task, task.threadId);
+        titleText.title = displayTaskTitle(task, task.threadId);
+        titleLine.append(titleText, makeProjectPill(task.projectLabel));
+        title.append(titleLine);
+        const status = document.createElement('td');
+        status.textContent = task.archived ? 'Archived' : formatTaskStatus(task.status);
+        const signal = document.createElement('td');
+        const signalBadge = document.createElement('span');
+        signalBadge.className = `size-signal ${isTopOne ? 'top-one' : isTopFive ? 'top-five' : ''}`.trim();
+        signalBadge.textContent = isTopOne ? 'Top 1% locally' : isTopFive ? 'Top 5% locally' : 'Typical range';
+        signal.append(signalBadge);
+        const updated = document.createElement('td');
+        updated.textContent = formatDate(task.updatedAt);
+        const size = document.createElement('td');
+        size.textContent = formatBytes(task.bytes);
+        row.append(title, status, signal, updated, size);
+        elements.largestTasksBody.append(row);
+      }
+    }
+
+    function renderMonthChart(items) {
+      elements.monthChart.replaceChildren();
+      const maximum = Math.max(1, ...items.map((item) => item.bytes));
+      for (const item of items) {
+        const column = document.createElement('div');
+        column.className = 'month-column';
+        const wrap = document.createElement('div');
+        wrap.className = 'month-bar-wrap';
+        const bar = document.createElement('div');
+        const level = item.bytes ? Math.max(1, Math.ceil((item.bytes / maximum) * 10)) : 0;
+        bar.className = `month-bar level-${level}`;
+        bar.title = `${item.tasks} tasks · ${formatBytes(item.bytes)}`;
+        const value = document.createElement('div');
+        value.className = 'month-value';
+        value.textContent = formatBytes(item.bytes);
+        const label = document.createElement('div');
+        label.className = 'month-label';
+        label.textContent = item.label;
+        wrap.append(bar);
+        column.append(wrap, value, label);
+        elements.monthChart.append(column);
+      }
+    }
+
+    async function refreshAdvancedStats() {
+      elements.refreshStats.disabled = true;
+      elements.historyTaskNote.textContent = 'Scanning local task records…';
+      try {
+        const result = await api('/api/stats');
+        const storage = result.storage || {};
+        const usage = result.usage || {};
+        const largest = storage.largest || [];
+        elements.historyTaskValue.textContent = String(storage.taskCount ?? '—');
+        elements.historyTaskNote.textContent = `${storage.sessionFileCount ?? 0} local session files`;
+        elements.historyStorageValue.textContent = formatBytes(storage.totalBytes);
+        elements.historyStorageNote.textContent = 'Current plus archived histories';
+        elements.largestTaskValue.textContent = largest[0] ? formatBytes(largest[0].bytes) : '—';
+        elements.largestTaskNote.textContent = largest[0] ? displayTaskTitle(largest[0], largest[0].threadId) : 'No local histories found';
+        elements.recentTaskValue.textContent = String(storage.recent?.week ?? '—');
+        elements.recentTaskNote.textContent = `${storage.recent?.month ?? 0} updated in 30 days`;
+        elements.activityDay.textContent = String(storage.recent?.day ?? '—');
+        elements.activityMonth.textContent = String(storage.recent?.month ?? '—');
+        elements.workspaceCount.textContent = String(storage.knownWorkspaceCount ?? '—');
+        elements.currentTaskCount.textContent = String(storage.currentTaskCount ?? '—');
+        elements.archivedTaskCount.textContent = String(storage.archivedTaskCount ?? '—');
+        elements.averageStorage.textContent = formatBytes(storage.averageBytes);
+        elements.medianStorage.textContent = formatBytes(storage.medianBytes);
+        elements.currentStorageLabel.textContent = formatBytes(storage.currentBytes);
+        elements.archivedStorageLabel.textContent = formatBytes(storage.archivedBytes);
+        const total = Math.max(1, storage.totalBytes || 0);
+        elements.currentStorageBar.value = Math.round(((storage.currentBytes || 0) / total) * 100);
+        elements.archivedStorageBar.value = Math.round(((storage.archivedBytes || 0) / total) * 100);
+        elements.advancedUsage.textContent = usage.remainingPercent === null || usage.remainingPercent === undefined ? '—' : `${usage.remainingPercent}%`;
+        elements.advancedUsageLabel.textContent = usage.planType ? `${usage.planType} plan remaining` : 'Usage remaining';
+        const usageParts = [];
+        if (usage.resetsAt) usageParts.push(`Current window resets ${formatReset(usage.resetsAt)}`);
+        if (usage.windowDurationMins) usageParts.push(`${Math.round(usage.windowDurationMins / 60)} hour window`);
+        usageParts.push(`${usage.resetCreditsAvailable || 0} reset credits shown`);
+        if (result.usageError) usageParts.push(result.usageError);
+        elements.advancedUsageNote.textContent = usageParts.join(' · ');
+        renderMonthChart(storage.monthly || []);
+        elements.sizeThresholdNote.textContent = `No proven file-size threshold is known to break a Codex task. On this computer, the largest 5% begin at ${formatBytes(storage.p95Bytes)} and the largest 1% at ${formatBytes(storage.p99Bytes)}. These are storage outliers, not failure predictions.`;
+        renderLargestTasks(largest, storage.p95Bytes || 0, storage.p99Bytes || 0);
+        statsLoaded = true;
+      } catch (error) {
+        elements.historyTaskNote.textContent = error.message;
+        elements.largestTasksBody.replaceChildren();
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 5;
+        cell.textContent = error.message;
+        row.append(cell);
+        elements.largestTasksBody.append(row);
+      } finally {
+        elements.refreshStats.disabled = false;
+      }
+    }
+
+    function usageTurns() {
+      return (usageReport?.tasks || []).flatMap((task) => (task.turns || []).map((turn) => ({
+        ...turn,
+        threadId: task.threadId,
+        taskTitle: displayTaskTitle(task, task.threadId),
+        projectLabel: displayProjectLabel(task.projectLabel),
+        key: `${task.threadId}:${turn.turnId}`,
+      })));
+    }
+
+    function findUsageTurn(key) {
+      return usageTurns().find((turn) => turn.key === key) || null;
+    }
+
+    function makeCell(text) {
+      const cell = document.createElement('td');
+      cell.textContent = text;
+      return cell;
+    }
+
+    function renderUsageBars(container, items, valueKey = 'totalTokens', formatter = formatTokens, maximumItems = 8) {
+      container.replaceChildren();
+      const shown = (items || []).slice(0, maximumItems);
+      if (!shown.length) {
+        const empty = document.createElement('div');
+        empty.className = 'data-note';
+        empty.textContent = 'No data available for this scope.';
+        container.append(empty);
+        return;
+      }
+      const maximum = Math.max(1, ...shown.map((item) => Number(item[valueKey]) || 0));
+      for (const item of shown) {
+        const row = document.createElement('div');
+        row.className = 'usage-bar-row';
+        const label = document.createElement('div');
+        label.className = 'usage-bar-label';
+        label.textContent = item.label || 'Unknown';
+        label.title = item.label || 'Unknown';
+        const bar = document.createElement('progress');
+        bar.className = 'storage-progress';
+        bar.max = maximum;
+        bar.value = Number(item[valueKey]) || 0;
+        const value = document.createElement('div');
+        value.className = 'usage-bar-value';
+        value.textContent = formatter(item[valueKey]);
+        row.append(label, bar, value);
+        container.append(row);
+      }
+    }
+
+    function renderTokenTrend(turns) {
+      const ordered = [...turns].sort((a, b) => (a.startedAt || 0) - (b.startedAt || 0)).slice(-24);
+      renderUsageBars(elements.tokenTrend, ordered.map((turn) => ({
+        label: `${turn.taskTitle} · T${turn.sequence}`,
+        totalTokens: turn.usage.totalTokens,
+      })), 'totalTokens', formatTokens, 24);
+    }
+
+    function populateTurnSelect(select, turns, placeholder) {
+      const prior = select.value;
+      select.replaceChildren();
+      const empty = document.createElement('option');
+      empty.value = '';
+      empty.textContent = placeholder;
+      select.append(empty);
+      for (const turn of turns) {
+        const option = document.createElement('option');
+        option.value = turn.key;
+        option.textContent = `${turn.taskTitle} · Turn ${turn.sequence} · ${formatTokens(turn.usage.totalTokens)}`;
+        select.append(option);
+      }
+      if (turns.some((turn) => turn.key === prior)) select.value = prior;
+    }
+
+    function renderTurnLedger(turns) {
+      elements.turnLedgerBody.replaceChildren();
+      if (!turns.length) {
+        const row = document.createElement('tr');
+        const cell = makeCell('No token-bearing turns were found in this scope.');
+        cell.colSpan = 9;
+        row.append(cell);
+        elements.turnLedgerBody.append(row);
+        return;
+      }
+      for (const turn of [...turns].sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0))) {
+        const row = document.createElement('tr');
+        row.dataset.turnKey = turn.key;
+        const name = document.createElement('td');
+        name.className = 'task-title-cell';
+        const title = document.createElement('div');
+        title.className = 'task-name-line';
+        const text = document.createElement('span');
+        text.className = 'task-name-text';
+        text.textContent = `${turn.taskTitle} · Turn ${turn.sequence}`;
+        title.append(text, makeProjectPill(turn.projectLabel));
+        name.append(title);
+        row.append(
+          name,
+          makeCell(`${turn.model || 'Unknown'} · ${turn.effort || 'default'}`),
+          makeCell(formatTokens(turn.usage.inputTokens)),
+          makeCell(`${turn.cacheHitPercent}%`),
+          makeCell(formatTokens(turn.usage.outputTokens)),
+          makeCell(String(turn.modelCalls)),
+          makeCell(String(turn.tools?.total || 0)),
+          makeCell(turn.durationMs ? formatDuration(turn.durationMs) : turn.status),
+          makeCell(formatTokens(turn.usage.totalTokens)),
+        );
+        row.addEventListener('click', () => {
+          elements.annotationTurn.value = turn.key;
+          loadAnnotationForm();
+          for (const item of elements.turnLedgerBody.querySelectorAll('tr')) item.classList.toggle('selected-row', item === row);
+        });
+        elements.turnLedgerBody.append(row);
+      }
+    }
+
+    function comparisonValue(turn, key) {
+      if (!turn) return null;
+      if (key === 'tokens') return turn.usage.totalTokens;
+      if (key === 'input') return turn.usage.inputTokens;
+      if (key === 'uncached') return turn.uncachedInputTokens;
+      if (key === 'output') return turn.usage.outputTokens;
+      if (key === 'reasoning') return turn.usage.reasoningOutputTokens;
+      if (key === 'calls') return turn.modelCalls;
+      if (key === 'tools') return turn.tools?.total || 0;
+      if (key === 'failures') return turn.tools?.failures || 0;
+      if (key === 'toolTime') return turn.tools?.durationMs || 0;
+      if (key === 'duration') return turn.durationMs || 0;
+      if (key === 'ttft') return turn.timeToFirstTokenMs || 0;
+      if (key === 'context') return turn.maxContextOccupancyPercent || 0;
+      if (key === 'cost') return turn.estimatedApiEquivalentCostUsd;
+      if (key === 'rating') return turn.annotation?.rating ?? null;
+      return null;
+    }
+
+    function renderComparison() {
+      const left = findUsageTurn(elements.compareTurnA.value);
+      const right = findUsageTurn(elements.compareTurnB.value);
+      elements.comparisonBody.replaceChildren();
+      if (!left || !right) {
+        const row = document.createElement('tr');
+        const cell = makeCell('Choose two turns to compare.');
+        cell.colSpan = 4;
+        row.append(cell);
+        elements.comparisonBody.append(row);
+        return;
+      }
+      const metrics = [
+        ['Aggregate tokens', 'tokens', formatTokens],
+        ['Input tokens', 'input', formatTokens],
+        ['Uncached input', 'uncached', formatTokens],
+        ['Output tokens', 'output', formatTokens],
+        ['Reasoning tokens', 'reasoning', formatTokens],
+        ['Model generations', 'calls', (value) => String(value)],
+        ['Tool actions', 'tools', (value) => String(value)],
+        ['Tool failures', 'failures', (value) => String(value)],
+        ['Recorded tool time', 'toolTime', formatDuration],
+        ['Duration', 'duration', formatDuration],
+        ['Time to first token', 'ttft', formatDuration],
+        ['Maximum context', 'context', (value) => `${value}%`],
+        ['API-equivalent estimate', 'cost', formatCurrency],
+        ['Outcome rating', 'rating', (value) => value === null ? 'Not rated' : `${value}/5`],
+      ];
+      for (const [label, key, formatter] of metrics) {
+        const a = comparisonValue(left, key);
+        const b = comparisonValue(right, key);
+        const difference = a === null || b === null ? '—' : formatter(Math.abs(b - a));
+        const signed = a === null || b === null || b === a ? difference : `${b > a ? '+' : '−'}${difference}`;
+        const row = document.createElement('tr');
+        row.append(makeCell(label), makeCell(formatter(a)), makeCell(formatter(b)), makeCell(signed));
+        elements.comparisonBody.append(row);
+      }
+    }
+
+    function optionalBoolean(value) {
+      if (value === '') return null;
+      return value === 'true';
+    }
+
+    function loadAnnotationForm() {
+      const turn = findUsageTurn(elements.annotationTurn.value);
+      const annotation = turn?.annotation || {};
+      elements.annotationRating.value = annotation.rating ?? '';
+      elements.annotationAccepted.value = annotation.accepted === null || annotation.accepted === undefined ? '' : String(annotation.accepted);
+      elements.annotationCorrection.value = annotation.requiredCorrection === null || annotation.requiredCorrection === undefined ? '' : String(annotation.requiredCorrection);
+      elements.annotationReviewMinutes.value = annotation.reviewMinutes ?? '';
+      elements.annotationCategory.value = annotation.category || '';
+      elements.annotationStrategy.value = annotation.strategy || '';
+      elements.saveAnnotation.disabled = !turn;
+      elements.deleteAnnotation.disabled = !turn || !turn.annotation;
+      elements.annotationStatus.textContent = turn
+        ? (turn.annotation ? 'This turn has a saved local outcome tag.' : 'No outcome is saved for this turn.')
+        : 'Choose a turn to add an outcome.';
+    }
+
+    function renderInsights(items) {
+      elements.insightList.replaceChildren();
+      for (const insight of items || []) {
+        const box = document.createElement('div');
+        box.className = `insight ${insight.level || ''}`.trim();
+        const title = document.createElement('div');
+        title.className = 'insight-title';
+        title.textContent = showcaseText(insight.title);
+        const detail = document.createElement('div');
+        detail.className = 'insight-detail';
+        detail.textContent = showcaseText(insight.detail);
+        box.append(title, detail);
+        elements.insightList.append(box);
+      }
+    }
+
+    function renderOutcomeSummary(outcomes) {
+      elements.outcomeSummary.replaceChildren();
+      const metrics = [
+        [outcomes?.averageRating === null || outcomes?.averageRating === undefined ? '—' : `${outcomes.averageRating}/5`, 'Average quality'],
+        [String(outcomes?.acceptedTurns ?? 0), 'Accepted turns'],
+        [String(outcomes?.requiredCorrectionTurns ?? 0), 'Needed correction'],
+        [outcomes?.reviewMinutes ? `${outcomes.reviewMinutes}m` : '0m', 'Human review'],
+      ];
+      for (const [value, label] of metrics) {
+        const box = document.createElement('div');
+        box.className = 'metric';
+        const valueNode = document.createElement('div');
+        valueNode.className = 'metric-value';
+        valueNode.textContent = value;
+        const labelNode = document.createElement('div');
+        labelNode.className = 'metric-label';
+        labelNode.textContent = label;
+        box.append(valueNode, labelNode);
+        elements.outcomeSummary.append(box);
+      }
+    }
+
+    function renderUsageIntelligence(result) {
+      usageReport = result.intelligence || null;
+      const summary = usageReport?.summary || {};
+      const usage = summary.usage || {};
+      const turns = usageTurns();
+      const coverage = usageReport?.coverage || {};
+      elements.totalTokenValue.textContent = formatTokens(usage.totalTokens);
+      elements.totalTokenNote.textContent = `${formatTokens(usage.inputTokens)} input + ${formatTokens(usage.outputTokens)} output`;
+      elements.cacheRatioValue.textContent = `${summary.cacheHitPercent ?? 0}%`;
+      elements.cacheRatioNote.textContent = `${formatTokens(usage.cachedInputTokens)} cached input tokens`;
+      elements.turnCountValue.textContent = String(summary.turnCount ?? 0);
+      elements.turnCountNote.textContent = `${summary.completedTurns ?? 0} completed · ${summary.activeTurns ?? 0} active`;
+      elements.topTurnValue.textContent = summary.topTurn ? formatTokens(summary.topTurn.usage.totalTokens) : '—';
+      elements.topTurnNote.textContent = summary.topTurn ? `${showcaseText(summary.topTurn.taskTitle)} · Turn ${summary.topTurn.sequence}` : 'No measured turns';
+      elements.inputTokenValue.textContent = formatTokens(usage.inputTokens);
+      elements.uncachedTokenValue.textContent = formatTokens(summary.uncachedInputTokens);
+      elements.cacheWriteTokenValue.textContent = formatTokens(usage.cacheWriteInputTokens);
+      elements.outputTokenValue.textContent = formatTokens(usage.outputTokens);
+      elements.reasoningTokenValue.textContent = formatTokens(usage.reasoningOutputTokens);
+      elements.modelCallValue.textContent = String(summary.modelCalls ?? 0);
+      elements.delegatedTokenValue.textContent = formatTokens(summary.delegatedTokens);
+      elements.apiEstimateValue.textContent = formatCurrency(summary.estimatedApiEquivalentCostUsd);
+      const budgets = summary.budgets || {};
+      elements.budgetStatusValue.textContent = !budgets.taskTokenBudget && !budgets.dailyTokenBudget
+        ? 'Off'
+        : (budgets.exceededTasks || budgets.exceededDays ? 'Exceeded' : 'On');
+      elements.maxContextValue.textContent = `${summary.maxContextOccupancyPercent ?? 0}%`;
+      elements.compactionValue.textContent = String(summary.compactions ?? 0);
+      elements.medianTurnValue.textContent = formatDuration(summary.medianTurnDurationMs);
+      elements.p95TurnValue.textContent = formatDuration(summary.p95TurnDurationMs);
+      elements.toolCallValue.textContent = String(summary.toolCalls ?? 0);
+      elements.toolFailureValue.textContent = String(summary.toolFailures ?? 0);
+      elements.followUpValue.textContent = `${summary.followUpTokenSharePercent ?? 0}%`;
+      elements.changedFileValue.textContent = String(summary.changedFiles ?? 0);
+      const eligibleFiles = Number(coverage.eligibleFiles) || 0;
+      const analyzedFiles = Number(coverage.analyzedFiles) || 0;
+      const skippedFiles = Math.max(0, Number(coverage.skippedEligibleFiles) || 0);
+      if (coverage.scope === 'task') {
+        elements.usageCoverage.textContent = `${analyzedFiles} local session file${analyzedFiles === 1 ? '' : 's'} analyzed for the selected task.`;
+      } else if (skippedFiles === 0) {
+        elements.usageCoverage.textContent = `All ${eligibleFiles} eligible recent files analyzed · ${coverage.windowDays ?? 0}-day window · ${formatBytes(coverage.analyzedBytes)} scanned.`;
+      } else {
+        elements.usageCoverage.textContent = `${analyzedFiles} most recent of ${eligibleFiles} eligible files analyzed · ${coverage.windowDays ?? 0}-day window · ${formatBytes(coverage.analyzedBytes)} scanned · ${skippedFiles} not yet analyzed.`;
+      }
+      usageAnalyzeAll = coverage.scope === 'recent' && coverage.analyzeAll === true;
+      elements.analyzeAllUsage.hidden = coverage.scope !== 'recent';
+      elements.analyzeAllUsage.textContent = skippedFiles > 0 ? `Analyze all ${eligibleFiles}` : `All ${eligibleFiles} analyzed`;
+      elements.analyzeAllUsage.disabled = coverage.scope !== 'recent' || skippedFiles === 0;
+      renderTokenTrend(turns);
+      renderUsageBars(elements.modelBreakdown, summary.models || []);
+      renderUsageBars(elements.effortBreakdown, summary.efforts || []);
+      renderUsageBars(elements.projectBreakdown, (summary.projects || []).map((item) => ({ ...item, label: displayProjectLabel(item.label) })));
+      renderUsageBars(elements.toolBreakdown, summary.tools || [], 'calls', (value) => `${value} calls`);
+      renderUsageBars(elements.dailyBreakdown, (summary.daily || []).slice(-14).map((item) => ({ label: item.date, totalTokens: item.totalTokens })));
+      renderUsageBars(elements.categoryBreakdown, (summary.categories || []).map((item) => ({ ...item, label: displayCustomLabel(item.label, 'Category') })));
+      renderUsageBars(elements.strategyBreakdown, (summary.strategies || []).map((item) => ({ ...item, label: displayCustomLabel(item.label, 'Strategy') })));
+      renderOutcomeSummary(summary.outcomes || {});
+      renderInsights(summary.insights || []);
+      renderTurnLedger(turns);
+      populateTurnSelect(elements.compareTurnA, turns, 'Choose Turn A');
+      populateTurnSelect(elements.compareTurnB, turns, 'Choose Turn B');
+      populateTurnSelect(elements.annotationTurn, turns, 'Choose a turn');
+      if (!elements.compareTurnA.value && turns[0]) elements.compareTurnA.value = turns[0].key;
+      if (!elements.compareTurnB.value && turns[1]) elements.compareTurnB.value = turns[1].key;
+      renderComparison();
+      loadAnnotationForm();
+      elements.exportUsage.disabled = !usageReport || showcaseMode;
+    }
+
+    async function refreshUsageIntelligence(force = false, analyzeAll = usageAnalyzeAll) {
+      let threadId = null;
+      if (elements.usageScope.value === 'task') {
+        const task = selectedTask();
+        if (!task) {
+          elements.usageScope.value = 'recent';
+        } else {
+          threadId = task.id;
+        }
+      }
+      const requestedAnalyzeAll = !threadId && analyzeAll === true;
+      elements.refreshUsage.disabled = true;
+      elements.analyzeAllUsage.disabled = true;
+      elements.usageCoverage.textContent = threadId
+        ? 'Analyzing the selected task…'
+        : (requestedAnalyzeAll ? 'Analyzing every eligible recent local record…' : 'Analyzing the 50 most recent local records…');
+      try {
+        const result = await api('/api/intelligence', { threadId, force, analyzeAll: requestedAnalyzeAll });
+        renderUsageIntelligence(result);
+        usageLoaded = true;
+      } catch (error) {
+        elements.usageCoverage.textContent = error.message;
+        elements.insightList.replaceChildren();
+        const note = document.createElement('div');
+        note.className = 'data-note';
+        note.textContent = error.message;
+        elements.insightList.append(note);
+        elements.analyzeAllUsage.disabled = false;
+      } finally {
+        elements.refreshUsage.disabled = false;
+      }
+    }
+
+    async function saveAnnotation() {
+      const turn = findUsageTurn(elements.annotationTurn.value);
+      if (!turn) return;
+      elements.saveAnnotation.disabled = true;
+      try {
+        await api('/api/annotations', {
+          action: 'upsert',
+          threadId: turn.threadId,
+          turnId: turn.turnId,
+          annotation: {
+            rating: elements.annotationRating.value,
+            accepted: optionalBoolean(elements.annotationAccepted.value),
+            requiredCorrection: optionalBoolean(elements.annotationCorrection.value),
+            reviewMinutes: elements.annotationReviewMinutes.value,
+            category: elements.annotationCategory.value,
+            strategy: elements.annotationStrategy.value,
+          },
+        });
+        elements.annotationStatus.textContent = 'Outcome saved locally. Refreshing the comparisons…';
+        await refreshUsageIntelligence(true);
+      } catch (error) {
+        elements.annotationStatus.textContent = error.message;
+      } finally {
+        elements.saveAnnotation.disabled = false;
+      }
+    }
+
+    async function deleteAnnotation() {
+      const turn = findUsageTurn(elements.annotationTurn.value);
+      if (!turn) return;
+      elements.deleteAnnotation.disabled = true;
+      try {
+        await api('/api/annotations', { action: 'delete', threadId: turn.threadId, turnId: turn.turnId });
+        elements.annotationStatus.textContent = 'Outcome cleared. Refreshing the comparisons…';
+        await refreshUsageIntelligence(true);
+      } catch (error) {
+        elements.annotationStatus.textContent = error.message;
+      }
+    }
+
+    function exportUsageJson() {
+      if (!usageReport) return;
+      const blob = new Blob([`${JSON.stringify(usageReport, null, 2)}\n`], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `codex-usage-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function refreshDashboard(quiet = false) {
+      if (!quiet) setStatus('Refreshing Codex status…');
+      try {
+        const result = await api('/api/dashboard', { threadId: explicitThreadId });
+        const preservePaging = quiet && tasks.length > 0;
+        renderTasks(result.tasks || [], {
+          append: preservePaging,
+          page: result.taskPage,
+          preservePaging,
+          preserveScroll: preservePaging,
+        });
+        const usage = result.usage || {};
+        elements.usageValue.textContent = usage.remainingPercent === null || usage.remainingPercent === undefined ? '—' : `${usage.remainingPercent}%`;
+        elements.usageNote.textContent = usage.planType ? `${usage.planType} plan` : (result.usageError || 'Limit data unavailable');
+        elements.resetValue.textContent = usage.resetsAt ? formatReset(usage.resetsAt) : '—';
+        elements.resetNote.textContent = usage.resetCreditsAvailable ? `${usage.resetCreditsAvailable} reset credit available` : 'No reset credit shown';
+        elements.activeValue.textContent = String(result.counts?.active ?? '—');
+        elements.activeNote.textContent = `${result.counts?.total ?? taskPaging.total} local tasks · ${tasks.length} loaded`;
+        elements.serverValue.textContent = 'Online';
+        elements.serverNote.textContent = `v${result.server?.version || '__TASK_CONTROL_VERSION__'} · ${Math.floor((result.server?.uptimeSeconds || 0) / 60)}m uptime`;
+        elements.endLocalRow.classList.toggle('hidden', result.server?.endLocalWorkEnabled === false);
+        setConnection(true, 'Connected to local Codex');
+        if (!quiet) {
+          const task = selectedTask();
+          if (!task) setStatus('Choose the intended task by title before sending.', 'warn');
+          else if (task.status === 'active') setStatus('The selected task is active. Send will become available after it finishes.', 'warn');
+          else setStatus('The selected task is ready for a follow-up.', 'good');
+        }
+      } catch (error) {
+        setConnection(false, 'Codex connection unavailable');
+        elements.serverValue.textContent = 'Waiting';
+        setStatus(error.message, 'error');
+      }
+    }
+
+    async function refreshReply(expectedNewTurn = false) {
+      const task = selectedTask();
+      if (!task) { setStatus('Select a Codex task first.', 'error'); return true; }
+      try {
+        const result = await api('/api/status', { threadId: task.id });
+        if (expectedNewTurn && result.latestTurnId === previousTurnId) {
+          setStatus('Codex accepted the follow-up. Waiting for the new turn…');
+          return false;
+        }
+        if (result.latestTurnStatus === 'completed') {
+          elements.reply.textContent = result.reply || 'The task completed, but its reply is not yet in the local session record.';
+          setStatus('The latest completed reply is ready.', 'good');
+          return true;
+        }
+        if (['interrupted', 'failed'].includes(result.latestTurnStatus) && result.taskStatus === 'idle') {
+          setStatus(`The latest turn is ${result.latestTurnStatus}; the task can accept a follow-up.`, 'warn');
+          return true;
+        }
+        setStatus('Codex is working. This page will keep checking.');
+        return false;
+      } catch (error) {
+        setStatus(error.message, 'error');
+        return true;
+      }
+    }
+
+    elements.taskSelect.addEventListener('change', () => {
+      updateSelectedTask();
+      usageLoaded = false;
+      if (elements.usageScope.value === 'task') elements.usageCoverage.textContent = 'Selected task changed. Analyze to refresh its usage.';
+      elements.reply.textContent = 'Refresh when you want to read this task’s latest local reply.';
+      setStatus(selectedTask() ? 'Task selected. The Send button is now available when the task is idle.' : 'Choose the intended task by title.', selectedTask() ? 'good' : 'warn');
+    });
+
+    elements.taskPickerButton.addEventListener('click', () => {
+      const opening = elements.taskPickerMenu.classList.contains('hidden');
+      elements.taskPickerMenu.classList.toggle('hidden', !opening);
+      elements.taskPickerButton.setAttribute('aria-expanded', String(opening));
+    });
+    elements.taskPickerMenu.addEventListener('scroll', () => {
+      const remaining = elements.taskPickerMenu.scrollHeight - elements.taskPickerMenu.scrollTop - elements.taskPickerMenu.clientHeight;
+      if (remaining < 90) loadMoreTasks();
+    });
+    elements.message.addEventListener('contextmenu', openEditorContextMenu);
+    elements.message.addEventListener('input', closeEditorContextMenu);
+    document.addEventListener('click', (event) => {
+      if (!elements.taskPickerButton.contains(event.target) && !elements.taskPickerMenu.contains(event.target)) closeTaskPicker();
+      if (!elements.editorContextMenu.contains(event.target)) closeEditorContextMenu();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeTaskPicker();
+        closeEditorContextMenu();
+      }
+    });
+    window.addEventListener('resize', closeEditorContextMenu);
+    window.addEventListener('scroll', closeEditorContextMenu, true);
+
+    elements.send.addEventListener('click', async () => {
+      const task = selectedTask();
+      const prompt = elements.message.value.trim();
+      if (!task) return setStatus('Select a Codex task first.', 'error');
+      if (!prompt) return setStatus('Write a follow-up message first.', 'error');
+      if (task.status === 'active') return setStatus('That task is active. Wait for it to finish.', 'warn');
+      if (waitTimer) { clearInterval(waitTimer); waitTimer = null; }
+      elements.send.disabled = true;
+      elements.reply.textContent = '';
+      setStatus(`Checking “${displayTaskTitle(task)}” and sending…`);
+      try {
+        const result = await api('/api/send', { threadId: task.id, prompt, requestId: crypto.randomUUID() });
+        previousTurnId = result.previousTurnId || null;
+        elements.message.value = '';
+        setStatus('Codex accepted the follow-up. Waiting for the reply…', 'good');
+        waitTimer = setInterval(async () => {
+          if (await refreshReply(true)) { clearInterval(waitTimer); waitTimer = null; await refreshDashboard(true); }
+        }, 4000);
+      } catch (error) {
+        setStatus(error.message, 'error');
+      } finally {
+        updateSelectedTask();
+      }
+    });
+
+    elements.refreshReply.addEventListener('click', () => refreshReply(false));
+    elements.refreshDashboard.addEventListener('click', () => refreshDashboard(false));
+    elements.refreshStats.addEventListener('click', refreshAdvancedStats);
+    elements.refreshUsage.addEventListener('click', () => refreshUsageIntelligence(true));
+    elements.analyzeAllUsage.addEventListener('click', () => refreshUsageIntelligence(true, true));
+    elements.exportUsage.addEventListener('click', exportUsageJson);
+    elements.usageScope.addEventListener('change', () => { usageLoaded = false; usageAnalyzeAll = false; refreshUsageIntelligence(false, false); });
+    elements.compareTurnA.addEventListener('change', renderComparison);
+    elements.compareTurnB.addEventListener('change', renderComparison);
+    elements.annotationTurn.addEventListener('change', loadAnnotationForm);
+    elements.saveAnnotation.addEventListener('click', saveAnnotation);
+    elements.deleteAnnotation.addEventListener('click', deleteAnnotation);
+    elements.controlTab.addEventListener('click', () => setPage('control'));
+    elements.usageTab.addEventListener('click', () => setPage('usage'));
+    elements.statsTab.addEventListener('click', () => setPage('stats'));
+
+    elements.stopServer.addEventListener('click', async () => {
+      const confirmation = window.prompt('Type STOP CONTROL CENTRE to stop this local server. Codex will stay open.');
+      if (confirmation !== 'STOP CONTROL CENTRE') return setStatus('The control centre was not stopped.');
+      try {
+        await api('/api/shutdown', { confirmation });
+        setStatus('Control centre stopped. Use the Start shortcut to run it again.', 'warn');
+        setConnection(false, 'Control centre stopped');
+      } catch (error) { setStatus(error.message, 'error'); }
+    });
+
+    elements.endLocal.addEventListener('click', async () => {
+      const confirmation = window.prompt('This interrupts all local Codex work and closes the app. Type END LOCAL WORK to continue.');
+      if (confirmation !== 'END LOCAL WORK') return setStatus('Local Codex work was left running.');
+      elements.endLocal.disabled = true;
+      try {
+        await api('/api/end-local-work', { confirmation });
+        setStatus('Stopping local Codex work. This page will disconnect.', 'warn');
+      } catch (error) {
+        elements.endLocal.disabled = false;
+        setStatus(error.message, 'error');
+      }
+    });
+
+    const initialView = new URLSearchParams(location.search).get('view');
+    const initialPage = ['stats', 'usage'].includes(initialView) ? initialView : 'control';
+    setPage('control', false);
+    refreshDashboard(false).then(() => {
+      if (initialPage !== 'control') setPage(initialPage, false);
+    });
+    setInterval(() => refreshDashboard(true), 20000);
+  </script>
+</body>
+</html>

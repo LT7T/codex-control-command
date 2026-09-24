@@ -1,0 +1,7 @@
+node_modules/
+*.log
+*.zip
+config.json
+usage-annotations.json
+.DS_Store
+Thumbs.db

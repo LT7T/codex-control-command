@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Command and Control"
+  short_description: "Recover follow-ups and analyze local Codex usage"
+  default_prompt: "Use $codex-task-control to install or open the local control centre, or analyze my privacy-safe Codex usage statistics."

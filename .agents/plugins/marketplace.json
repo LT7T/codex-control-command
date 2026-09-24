@@ -1,0 +1,20 @@
+{
+  "name": "codex-task-control",
+  "interface": {
+    "displayName": "Codex Command and Control"
+  },
+  "plugins": [
+    {
+      "name": "codex-task-control",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex-task-control"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
