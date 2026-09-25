@@ -55,4 +55,6 @@ Choose **Uninstall Codex Command and Control** from the Start Menu. Uninstall re
 4. If the port was changed in `%LOCALAPPDATA%\CodexTaskControl\config.json`, use that port instead.
 5. If the health page works but the task list does not, a Codex desktop update may have changed the private local interface this workaround relies on. Stop using the send function until the project is updated.
 
+The Start shortcut brings up the local server before it launches Codex, so the page remains available during a slow cold app start. If server startup itself fails, the shortcut shows the error and saves the same details in `%LOCALAPPDATA%\CodexTaskControl\startup-error.log`.
+
 For the security boundaries, see [SECURITY.md](SECURITY.md). For exactly what the app reads and retains, see [PRIVACY.md](PRIVACY.md).

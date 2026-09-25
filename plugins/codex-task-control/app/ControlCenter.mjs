@@ -30,7 +30,7 @@ import {
 } from './UsageAnnotations.mjs';
 import { suggestSpelling } from './SpellingService.mjs';
 
-export const VERSION = '0.3.0';
+export const VERSION = '0.3.1';
 const APP_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const ANNOTATIONS_PATH = path.join(APP_DIRECTORY, 'usage-annotations.json');
 const HOST = '127.0.0.1';

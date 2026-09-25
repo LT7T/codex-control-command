@@ -1,7 +1,7 @@
 {
   "name": "codex-task-control-repository",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Local Windows control centre for Codex tasks that finish but leave Send disabled, with privacy-safe usage analysis.",
   "type": "module",
   "scripts": {

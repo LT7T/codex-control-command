@@ -8,25 +8,13 @@ param(
 Set-StrictMode -Version 3.0
 $ErrorActionPreference = 'Stop'
 
-$serverPath = Join-Path $PSScriptRoot 'ControlCenter.mjs'
 $configPath = Join-Path $PSScriptRoot 'config.json'
-if (-not (Test-Path -LiteralPath $serverPath -PathType Leaf)) { throw "Missing control centre server: $serverPath" }
+$serverStarterPath = Join-Path $PSScriptRoot 'Start-ControlCenterServer.ps1'
+$startupErrorPath = Join-Path $PSScriptRoot 'startup-error.log'
+if (-not (Test-Path -LiteralPath $serverStarterPath -PathType Leaf)) { throw "Missing control centre server launcher: $serverStarterPath" }
 if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) { throw "Missing control centre config: $configPath" }
 
 $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
-$port = [int]$config.port
-if ($port -lt 1024 -or $port -gt 65535) { throw 'The configured port is invalid.' }
-$url = "http://127.0.0.1:$port/"
-$healthUrl = $url + 'health'
-$node = (Get-Command node.exe -ErrorAction Stop).Source
-
-function Test-ControlCenter {
-    try {
-        $result = Invoke-RestMethod -Uri $healthUrl -TimeoutSec 1
-        return $result.app -eq 'codex-task-control'
-    }
-    catch { return $false }
-}
 
 function Get-CodexPackage {
     return Get-AppxPackage -Name 'OpenAI.Codex' |
@@ -41,28 +29,49 @@ function Test-CodexRunning($Package) {
     }).Count -gt 0
 }
 
-$package = Get-CodexPackage
-if (-not $package) { throw 'The supported OpenAI Codex Windows app is not installed for this account.' }
-if (-not (Test-CodexRunning -Package $package)) {
-    $manifest = Get-AppxPackageManifest -Package $package.PackageFullName
-    $appId = @($manifest.Package.Applications.Application)[0].Id
-    if (-not $appId) { $appId = 'App' }
-    $target = "shell:AppsFolder\$($package.PackageFamilyName)!$appId"
-    Start-Process -FilePath (Join-Path $env:WINDIR 'explorer.exe') -ArgumentList $target
-    $deadline = (Get-Date).AddSeconds(20)
-    do { Start-Sleep -Milliseconds 500 } while (-not (Test-CodexRunning -Package $package) -and (Get-Date) -lt $deadline)
-    if (-not (Test-CodexRunning -Package $package)) { throw 'Codex did not start within 20 seconds.' }
+function Write-StartupFailure([string]$Message) {
+    @(
+        'Codex Command and Control startup failed.'
+        'Time: ' + (Get-Date).ToString('o')
+        'Error: ' + $Message
+    ) | Set-Content -LiteralPath $startupErrorPath -Encoding UTF8
+    if (-not $NoOpen) {
+        try {
+            $shell = New-Object -ComObject WScript.Shell
+            $shell.Popup("Codex Command and Control could not start.`n`n$Message`n`nDetails: $startupErrorPath", 0, 'Codex Command and Control', 16) | Out-Null
+        }
+        catch { }
+    }
 }
 
-if (-not (Test-ControlCenter)) {
-    $listener = Get-NetTCPConnection -LocalAddress '127.0.0.1' -LocalPort $port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($listener) { throw "Port $port is already in use by another program." }
-    Start-Process -FilePath $node -ArgumentList ('"' + $serverPath + '"') -WorkingDirectory $PSScriptRoot -WindowStyle Hidden | Out-Null
-    $deadline = (Get-Date).AddSeconds(12)
-    while ((Get-Date) -lt $deadline -and -not (Test-ControlCenter)) { Start-Sleep -Milliseconds 250 }
-    if (-not (Test-ControlCenter)) { throw 'Codex Command and Control could not start.' }
-}
+try {
+    # Bring up the loopback server before touching Codex. A cold Codex launch can
+    # be slow, but it must not prevent the local page from becoming available.
+    $url = & $serverStarterPath
 
-$targetUrl = if ($ThreadId) { $url + '?threadId=' + $ThreadId.ToLowerInvariant() } else { $url }
-if (-not $NoOpen -and $config.openBrowserOnShortcut -ne $false) { Start-Process -FilePath $targetUrl }
-Write-Output $targetUrl
+    $targetUrl = if ($ThreadId) { $url + '?threadId=' + $ThreadId.ToLowerInvariant() } else { $url }
+    if (-not $NoOpen -and $config.openBrowserOnShortcut -ne $false) { Start-Process -FilePath $targetUrl }
+
+    try {
+        $package = Get-CodexPackage
+        if (-not $package) {
+            Write-Warning 'The local server is running, but the supported OpenAI Codex Windows app is not installed for this account.'
+        } elseif (-not (Test-CodexRunning -Package $package)) {
+            $manifest = Get-AppxPackageManifest -Package $package.PackageFullName
+            $appId = @($manifest.Package.Applications.Application)[0].Id
+            if (-not $appId) { $appId = 'App' }
+            $target = "shell:AppsFolder\$($package.PackageFamilyName)!$appId"
+            Start-Process -FilePath (Join-Path $env:WINDIR 'explorer.exe') -ArgumentList $target
+        }
+    }
+    catch {
+        Write-Warning "The local server is running, but Codex could not be launched automatically: $($_.Exception.Message)"
+    }
+
+    if (Test-Path -LiteralPath $startupErrorPath -PathType Leaf) { Remove-Item -LiteralPath $startupErrorPath -Force }
+    Write-Output $targetUrl
+}
+catch {
+    Write-StartupFailure -Message $_.Exception.Message
+    throw
+}

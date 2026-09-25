@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1 - 2026-09-25
+
+- Start the loopback control-centre server before launching Codex so a slow cold start cannot prevent the local page from becoming available.
+- Record the installer-validated Node.js executable and reuse it when desktop shortcuts inherit a stale or incomplete `PATH`.
+- Launch Codex asynchronously after the server is healthy instead of aborting the hidden shortcut after a fixed app-start timeout.
+- Show a visible startup error and save `startup-error.log` when the desktop shortcut cannot bring up the server.
+- Added an integration check for the same server-only launcher used by the desktop shortcut.
+
 ## 0.3.0 - 2026-09-24
 
 - Renamed the product to **Codex Command and Control** while retaining the existing internal IDs and installation path for upgrade compatibility.

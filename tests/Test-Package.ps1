@@ -26,6 +26,7 @@ $required = @(
     (Join-Path $app 'Get-SpellingSuggestions.ps1'),
     (Join-Path $app 'Get-CodexUsageStats.mjs'),
     (Join-Path $app 'Get-CodexUsageStats.ps1'),
+    (Join-Path $app 'Start-ControlCenterServer.ps1'),
     (Join-Path $app 'public\index.html')
 )
 foreach ($file in $required) {
@@ -103,10 +104,26 @@ $configPath = Join-Path $temporaryRoot 'config.json'
 } | ConvertTo-Json | Set-Content -LiteralPath $configPath -Encoding UTF8
 
 $oldConfig = $env:CODEX_TASK_CONTROL_CONFIG
+$oldPath = $env:Path
 $env:CODEX_TASK_CONTROL_CONFIG = $configPath
-$process = $null
+$serverStarted = $false
 try {
-    $process = Start-Process -FilePath (Get-Command node).Source -ArgumentList ('"' + (Join-Path $app 'ControlCenter.mjs') + '"') -WorkingDirectory $app -WindowStyle Hidden -PassThru
+    $nodePath = (Get-Command node).Source
+    Copy-Item -Path (Join-Path $app '*') -Destination $temporaryRoot -Recurse -Force
+    @{
+        app = 'codex-task-control'
+        version = 'test'
+        nodePath = $nodePath
+        nodeVersion = (& $nodePath --version).TrimStart('v')
+    } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $temporaryRoot 'install.json') -Encoding UTF8
+    $env:Path = @(
+        (Join-Path $env:WINDIR 'System32')
+        $env:WINDIR
+        (Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0')
+    ) -join ';'
+    $launchUrl = & (Join-Path $temporaryRoot 'Start-ControlCenterServer.ps1')
+    $serverStarted = $true
+    if ($launchUrl -ne "http://127.0.0.1:$port/") { throw 'The server-only launcher returned an unexpected URL.' }
     $deadline = (Get-Date).AddSeconds(10)
     do {
         Start-Sleep -Milliseconds 200
@@ -116,7 +133,8 @@ try {
     if ($health.app -ne 'codex-task-control' -or $health.host -ne '127.0.0.1' -or $health.port -ne $port) { throw 'Health endpoint returned unexpected data.' }
 }
 finally {
-    if ($process -and -not $process.HasExited) { Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue }
+    if ($serverStarted) { & (Join-Path $temporaryRoot 'Stop-ControlCenter.ps1') | Out-Null }
+    $env:Path = $oldPath
     $env:CODEX_TASK_CONTROL_CONFIG = $oldConfig
     if (Test-Path -LiteralPath $temporaryRoot) { Remove-Item -LiteralPath $temporaryRoot -Recurse -Force }
 }

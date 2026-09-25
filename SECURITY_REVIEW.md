@@ -1,12 +1,12 @@
-# Security review for 0.3.0
+# Security review for 0.3.1
 
-Review date: 2026-09-24
+Review date: 2026-09-25
 
 This is a maintainer review of the public source package, not an independent penetration test or a guarantee that the software is vulnerability-free.
 
 ## Result
 
-No known critical, high, or medium-severity issue remains open in the reviewed 0.3.0 package.
+No known critical, high, or medium-severity issue remains open in the reviewed 0.3.1 package.
 
 The review covered the loopback HTTP server, browser page, Codex named-pipe bridge, installer, uninstaller, start and stop scripts, local-work shutdown, usage parser and reporter, annotations store, Windows spelling bridge, plugin manifest, documentation, tests, and GitHub Actions workflow.
 
@@ -36,6 +36,8 @@ The review covered the loopback HTTP server, browser page, Codex named-pipe brid
 - Kept the 50-history default and full-history action streaming, locally initiated, and bounded to the chosen time and archive scope.
 - Pinned the GitHub Actions checkout and Node setup actions to full commit hashes.
 - Added unit, package, PowerShell syntax, local spelling, inline-script, and privacy regression checks.
+- Split server startup from Codex app activation so the loopback service becomes healthy before a cold app launch, retained the installer-validated Node.js path for stale desktop environments, and kept runtime validation at Node.js 20 or later.
+- Added a bounded local startup-error report and visible shortcut failure message without changing the loopback bind, request-token, origin, or sending boundaries.
 
 ## Residual risks and trust boundaries
 

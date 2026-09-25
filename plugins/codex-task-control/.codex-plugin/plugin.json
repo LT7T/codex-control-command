@@ -1,6 +1,6 @@
 {
   "name": "codex-task-control",
-  "version": "0.3.0+codex.20260924230600",
+  "version": "0.3.1+codex.20260925110105",
   "description": "A local Windows control centre for Codex tasks that finish but leave Send disabled, plus privacy-safe usage analysis and local-work controls.",
   "author": {
     "name": "Codex Command and Control contributors"

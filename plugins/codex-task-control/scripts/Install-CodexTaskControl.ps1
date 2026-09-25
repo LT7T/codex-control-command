@@ -8,6 +8,7 @@ param(
 
 Set-StrictMode -Version 3.0
 $ErrorActionPreference = 'Stop'
+$appVersion = '0.3.1'
 
 $pluginRoot = Split-Path $PSScriptRoot -Parent
 $sourceApp = Join-Path $pluginRoot 'app'
@@ -46,10 +47,12 @@ if ($existingConfig) {
 
 [ordered]@{
     app = 'codex-task-control'
-    version = '0.3.0'
+    version = $appVersion
     installedAt = (Get-Date).ToString('o')
     installRoot = $resolvedInstallRoot
     defaultInstallRoot = ($resolvedInstallRoot -eq $defaultInstallRoot)
+    nodePath = [System.IO.Path]::GetFullPath($node.Source)
+    nodeVersion = $nodeVersionText
 } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $resolvedInstallRoot 'install.json') -Encoding UTF8
 
 $shell = New-Object -ComObject WScript.Shell
@@ -105,7 +108,7 @@ if ($Start) {
 
 [pscustomobject]@{
     Success = $true
-    Version = '0.3.0'
+    Version = $appVersion
     InstallRoot = $resolvedInstallRoot
     ConfigPath = (Join-Path $resolvedInstallRoot 'config.json')
     StartMenuFolder = $startMenuFolder
